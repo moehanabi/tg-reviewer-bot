@@ -1,6 +1,6 @@
 import logging
-from telegram.ext import ApplicationBuilder, CommandHandler
-from submit import *
+from telegram.ext import ApplicationBuilder
+from submit import submission_handler
 from utils import TG_TOKEN
 
 logging.basicConfig(
@@ -11,7 +11,5 @@ logging.basicConfig(
 if __name__ == '__main__':
     application = ApplicationBuilder().token(TG_TOKEN).build()
 
-    new_submission_handler = CommandHandler('new', handle_new_sumission)
-    application.add_handler(new_submission_handler)
-
+    application.add_handler(submission_handler)
     application.run_polling()
