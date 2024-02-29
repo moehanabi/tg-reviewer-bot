@@ -87,6 +87,9 @@ async def collect_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await send_media(context=context, chat_id=update.effective_chat.id, media=submission['media'], documents=submission['documents'], text=submission['text'])
 
+    # delete last confirm button if it exists
+    if submission['last_confirm_button']:
+        await submission['last_confirm_button'].delete()
     # show options as an inline keyboard
     keyboard = [
         [
@@ -102,7 +105,7 @@ async def collect_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await message.reply_text("投稿已收到，你可以继续发送消息作为同一组投稿，也可以结束发送，选择匿名投稿、实名投稿或者取消投稿。", reply_markup=reply_markup)
+    submission['last_confirm_button'] = await message.reply_text("投稿已收到，你可以继续发送消息作为同一组投稿，也可以结束发送，选择匿名投稿、实名投稿或者取消投稿。", reply_markup=reply_markup)
 
     return COLLECTING
 
@@ -116,7 +119,8 @@ async def handle_new_submission(update: Update, context: ContextTypes.DEFAULT_TY
         'documents': [],
         'text': '',
         'user_id': update.effective_user.id,
-        'user_name': update.effective_user.full_name
+        'user_name': update.effective_user.full_name,
+        'last_confirm_button': None,
     }
     return COLLECTING
 
