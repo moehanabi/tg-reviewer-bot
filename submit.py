@@ -47,32 +47,56 @@ async def confirm_submission(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 async def send_group(context: ContextTypes.DEFAULT_TYPE, chat_id, media=[], text=""):
+    sent_messages = []
+
     for i in range(0, len(media), 10):
         portion = media[i:i+10]
         if len(portion) == 1:
             if type(portion[0]) == InputMediaPhoto:
-                await context.bot.send_photo(chat_id=chat_id, photo=portion[0].media, caption=text)
+                sent_messages.append(await context.bot.send_photo(chat_id=chat_id, photo=portion[0].media, caption=text))
             elif type(portion[0]) == InputMediaVideo:
-                await context.bot.send_video(chat_id=chat_id, video=portion[0].media, caption=text)
+                sent_messages.append(await context.bot.send_video(chat_id=chat_id, video=portion[0].media, caption=text))
         else:
-            await context.bot.send_media_group(chat_id=chat_id, media=portion, caption=text)
+            sent_messages.extend(await context.bot.send_media_group(chat_id=chat_id, media=portion, caption=text))
+
+    return sent_messages
 
 
-async def send_media(context: ContextTypes.DEFAULT_TYPE, chat_id, media=[], documents=[], text=""):
-    if len(media) == 0 and len(documents) == 0:
-        await context.bot.send_message(chat_id=chat_id, text=text)
-        return
-    if len(media) > 0:
-        await send_group(context=context, chat_id=chat_id, media=media, text=text)
-    if len(documents) > 0:
-        await send_group(context=context, chat_id=chat_id, media=documents, text=text)
+async def send_media(context: ContextTypes.DEFAULT_TYPE, chat_id, media=None, documents=None, text=""):
+    sent_messages = []
+
+    media_list = media if media else []
+    documents_list = documents if documents else []
+
+    # no media or documents, just send text
+    if not media_list and not documents_list:
+        sent_messages.append(await context.bot.send_message(chat_id=chat_id, text=text))
+        return sent_messages
+
+    # send media and documents
+    for m_list in [media_list, documents_list]:
+        if m_list:
+            sent_messages.extend(await send_group(context=context, chat_id=chat_id, media=m_list, text=text))
+
+    return sent_messages
 
 
 async def collect_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     submission = message_groups[update.effective_user.id]
     message = update.message
+
     # add new message to this user's message_groups dict
     submission['messages'].append(message)
+
+    # delete preview messages and last confirm button if they exist
+    if submission['last_preview_messages']:
+        for msg in submission['last_preview_messages']:
+            await msg.delete()
+    if submission['last_confirm_button']:
+        await submission['last_confirm_button'].delete()
+    submission['last_preview_messages'] = []
+    submission['last_confirm_button'] = None
+
     # show preview of all messages this user has sent
     if message.text:
         submission['text'] += message.text + "\n"
@@ -85,11 +109,8 @@ async def collect_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if message.document:
         submission['documents'].append(InputMediaDocument(message.document))
 
-    await send_media(context=context, chat_id=update.effective_chat.id, media=submission['media'], documents=submission['documents'], text=submission['text'])
+    submission['last_preview_messages'].extend(await send_media(context=context, chat_id=update.effective_chat.id, media=submission['media'], documents=submission['documents'], text=submission['text']))
 
-    # delete last confirm button if it exists
-    if submission['last_confirm_button']:
-        await submission['last_confirm_button'].delete()
     # show options as an inline keyboard
     keyboard = [
         [
@@ -120,6 +141,7 @@ async def handle_new_submission(update: Update, context: ContextTypes.DEFAULT_TY
         'text': '',
         'user_id': update.effective_user.id,
         'user_name': update.effective_user.full_name,
+        'last_preview_messages': [],
         'last_confirm_button': None,
     }
     return COLLECTING
