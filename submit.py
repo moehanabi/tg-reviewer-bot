@@ -19,25 +19,15 @@ async def confirm_submission(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     if query.data.startswith("cancel"):
         await query.edit_message_text(text="投稿已取消")
-    elif query.data.startswith("anonymous"):
-        message_id = query.data.split(".")[1]
+    elif query.data.startswith(("anonymous", "realname")):
+        if query.data.startswith("realname"):
+            submission['text'] += f"\n\nby {update.effective_user.full_name}"
         await send_submission(
             context=context,
             chat_id=TG_REVIEWER_GROUP,
             media=submission['media'],
             documents=submission['documents'],
             text=submission['text']
-        )
-
-        await query.edit_message_text(text="投稿成功")
-    elif query.data.startswith("realname"):
-        message_id = query.data.split(".")[1]
-        await send_submission(
-            context=context,
-            chat_id=TG_REVIEWER_GROUP,
-            media=submission['media'],
-            documents=submission['documents'],
-            text=f"{submission['text']}\n\nby {update.effective_user.full_name}"
         )
 
         await query.edit_message_text(text="投稿成功")
@@ -79,12 +69,10 @@ async def collect_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # show options as an inline keyboard
     keyboard = [
         [
-            # we should carry on the message_id as the callback_data
-            # because in confirm_submission we can not get the message_id anymore
             InlineKeyboardButton(
-                "匿名投稿", callback_data=f"anonymous.{update.message.message_id}"),
+                "匿名投稿", callback_data=f"anonymous"),
             InlineKeyboardButton(
-                "实名投稿", callback_data=f"realname.{update.message.message_id}"),
+                "实名投稿", callback_data=f"realname"),
         ],
         [
             InlineKeyboardButton("取消投稿", callback_data="cancel")
