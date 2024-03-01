@@ -1,6 +1,6 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, InputMediaPhoto, InputMediaVideo, InputMediaDocument
 from telegram.ext import CallbackQueryHandler, CommandHandler, ContextTypes, MessageHandler, ConversationHandler, filters
-from utils import TG_REVIEWER_GROUP
+from utils import TG_REVIEWER_GROUP, send_submission
 
 # set const as the state of one user
 COLLECTING = range(1)
@@ -21,7 +21,7 @@ async def confirm_submission(update: Update, context: ContextTypes.DEFAULT_TYPE)
         await query.edit_message_text(text="投稿已取消")
     elif query.data.startswith("anonymous"):
         message_id = query.data.split(".")[1]
-        await send_media(
+        await send_submission(
             context=context,
             chat_id=TG_REVIEWER_GROUP,
             media=submission['media'],
@@ -32,7 +32,7 @@ async def confirm_submission(update: Update, context: ContextTypes.DEFAULT_TYPE)
         await query.edit_message_text(text="投稿成功")
     elif query.data.startswith("realname"):
         message_id = query.data.split(".")[1]
-        await send_media(
+        await send_submission(
             context=context,
             chat_id=TG_REVIEWER_GROUP,
             media=submission['media'],
@@ -44,41 +44,6 @@ async def confirm_submission(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     del message_groups[update.effective_user.id]
     return ConversationHandler.END
-
-
-async def send_group(context: ContextTypes.DEFAULT_TYPE, chat_id, media=[], text=""):
-    sent_messages = []
-
-    for i in range(0, len(media), 10):
-        portion = media[i:i+10]
-        if len(portion) == 1:
-            if type(portion[0]) == InputMediaPhoto:
-                sent_messages.append(await context.bot.send_photo(chat_id=chat_id, photo=portion[0].media, caption=text))
-            elif type(portion[0]) == InputMediaVideo:
-                sent_messages.append(await context.bot.send_video(chat_id=chat_id, video=portion[0].media, caption=text))
-        else:
-            sent_messages.extend(await context.bot.send_media_group(chat_id=chat_id, media=portion, caption=text))
-
-    return sent_messages
-
-
-async def send_media(context: ContextTypes.DEFAULT_TYPE, chat_id, media=None, documents=None, text=""):
-    sent_messages = []
-
-    media_list = media if media else []
-    documents_list = documents if documents else []
-
-    # no media or documents, just send text
-    if not media_list and not documents_list:
-        sent_messages.append(await context.bot.send_message(chat_id=chat_id, text=text))
-        return sent_messages
-
-    # send media and documents
-    for m_list in [media_list, documents_list]:
-        if m_list:
-            sent_messages.extend(await send_group(context=context, chat_id=chat_id, media=m_list, text=text))
-
-    return sent_messages
 
 
 async def collect_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -109,7 +74,7 @@ async def collect_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if message.document:
         submission['documents'].append(InputMediaDocument(message.document))
 
-    submission['last_preview_messages'].extend(await send_media(context=context, chat_id=update.effective_chat.id, media=submission['media'], documents=submission['documents'], text=submission['text']))
+    submission['last_preview_messages'].extend(await send_submission(context=context, chat_id=update.effective_chat.id, media=submission['media'], documents=submission['documents'], text=submission['text']))
 
     # show options as an inline keyboard
     keyboard = [
