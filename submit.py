@@ -15,33 +15,34 @@ async def confirm_submission(update: Update, context: ContextTypes.DEFAULT_TYPE)
     # Some clients may have trouble otherwise. See https://core.telegram.org/bots/api#callbackquery
     await query.answer()
 
-    submission = message_groups[update.effective_user.id]
+    user = update.effective_user
+    submission = message_groups[user.id]
 
     if query.data.startswith("cancel"):
         await query.edit_message_text(text="投稿已取消")
     elif query.data.startswith(("anonymous", "realname")):
         if query.data.startswith("realname"):
-            submission['text'] += f"\n\nby {update.effective_user.full_name}"
-        await send_submission(
+            submission['text'] += f"\n\nby {user.full_name}"
+
+        submission_messages = await send_submission(
             context=context,
             chat_id=TG_REVIEWER_GROUP,
-            media=submission['media'],
-            documents=submission['documents'],
+            media_id_list=submission['media_id_list'],
+            media_type_list=submission['media_type_list'],
+            documents_id_list=submission['document_id_list'],
+            document_type_list=submission['document_type_list'],
             text=submission['text']
         )
 
         await query.edit_message_text(text="投稿成功")
 
-    del message_groups[update.effective_user.id]
+    del message_groups[user.id]
     return ConversationHandler.END
 
 
 async def collect_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     submission = message_groups[update.effective_user.id]
     message = update.message
-
-    # add new message to this user's message_groups dict
-    submission['messages'].append(message)
 
     # delete preview messages and last confirm button if they exist
     if submission['last_preview_messages']:
@@ -52,19 +53,23 @@ async def collect_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     submission['last_preview_messages'] = []
     submission['last_confirm_button'] = None
 
-    # show preview of all messages this user has sent
+    # add new message to this user's message_groups dict
     if message.text:
         submission['text'] += message.text + "\n"
     if message.caption:
         submission['text'] += message.caption + "\n"
     if message.photo:
-        submission['media'].append(InputMediaPhoto(message.photo[-1]))
+        submission['media_id_list'].append(message.photo[-1].file_id)
+        submission['media_type_list'].append("photo")
     if message.video:
-        submission['media'].append(InputMediaVideo(message.video))
+        submission['media_id_list'].append(message.video.file_id)
+        submission['media_type_list'].append("video")
     if message.document:
-        submission['documents'].append(InputMediaDocument(message.document))
+        submission['document_id_list'].append(message.document.file_id)
+        submission['document_type_list'].append("document")
 
-    submission['last_preview_messages'].extend(await send_submission(context=context, chat_id=update.effective_chat.id, media=submission['media'], documents=submission['documents'], text=submission['text']))
+    # show preview of all messages this user has sent
+    submission['last_preview_messages'].extend(await send_submission(context=context, chat_id=update.effective_chat.id, media_id_list=submission['media_id_list'], media_type_list=submission['media_type_list'], documents_id_list=submission['document_id_list'], document_type_list=submission['document_type_list'], text=submission['text']))
 
     # show options as an inline keyboard
     keyboard = [
@@ -88,9 +93,10 @@ async def handle_new_submission(update: Update, context: ContextTypes.DEFAULT_TY
     await update.message.reply_text("请开始你的投稿，你可以发送多条消息，包括文本和媒体。")
     # empty this user's message_groups dict
     message_groups[update.effective_user.id] = {
-        'messages': [],
-        'media': [],
-        'documents': [],
+        'media_id_list': [],
+        'media_type_list': [],
+        'document_id_list': [],
+        'document_type_list': [],
         'text': '',
         'user_id': update.effective_user.id,
         'user_name': update.effective_user.full_name,
