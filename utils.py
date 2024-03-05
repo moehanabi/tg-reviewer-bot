@@ -6,6 +6,8 @@ from telegram.ext import ContextTypes
 TG_TOKEN = os.environ.get('TG_TOKEN')
 TG_REVIEWER_GROUP = os.environ.get('TG_REVIEWER_GROUP')
 TG_PUBLISH_CHANNEL = os.environ.get('TG_PUBLISH_CHANNEL')
+APPROVE_NUMBER_REQUIRED = 2
+REJECT_NUMBER_REQUIRED = 2
 
 
 async def send_group(context: ContextTypes.DEFAULT_TYPE, chat_id, item_list, type_list, text=""):

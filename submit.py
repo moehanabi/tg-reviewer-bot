@@ -1,6 +1,7 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, InputMediaPhoto, InputMediaVideo, InputMediaDocument
 from telegram.ext import CallbackQueryHandler, CommandHandler, ContextTypes, MessageHandler, ConversationHandler, filters
 from utils import TG_REVIEWER_GROUP, send_submission
+from review import reply_review_message
 
 # set const as the state of one user
 COLLECTING = range(1)
@@ -24,6 +25,16 @@ async def confirm_submission(update: Update, context: ContextTypes.DEFAULT_TYPE)
         if query.data.startswith("realname"):
             submission['text'] += f"\n\nby {user.full_name}"
 
+        submission_meta = {
+            "submitter": [user.id, user.username, user.full_name],
+            "reviewer": {},
+            "media_id_list": submission['media_id_list'],
+            "media_type_list": submission['media_type_list'],
+            "documents_id_list": submission['document_id_list'],
+            "document_type_list": submission['document_type_list'],
+            "text": submission['text'],
+        }
+
         submission_messages = await send_submission(
             context=context,
             chat_id=TG_REVIEWER_GROUP,
@@ -33,7 +44,7 @@ async def confirm_submission(update: Update, context: ContextTypes.DEFAULT_TYPE)
             document_type_list=submission['document_type_list'],
             text=submission['text']
         )
-
+        await reply_review_message(submission_messages[0], submission_meta)
         await query.edit_message_text(text="投稿成功")
 
     del message_groups[user.id]
