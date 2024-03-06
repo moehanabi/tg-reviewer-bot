@@ -31,6 +31,13 @@ class ReviewChoice:
     WITHDRAW = '5'
 
 
+class SubmissionStatus:
+    PENDING = 0
+    APPROVED = 1
+    REJECTED = 2
+    REJECTED_NO_REASON = 3
+
+
 async def reply_review_message(first_submission_message, submission_meta):
     # reply the first submission_message and show the inline keyboard to let the reviewers to decide whether to publish it
     inline_keyboard = InlineKeyboardMarkup(
@@ -118,7 +125,8 @@ async def reject_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
             submission_meta['reviewer'][query.from_user.id][2] = len(
                 REJECTION_REASON)
         case "REASON.OTHER":
-            pass
+            await query.answer("😂 只要回复本条消息并附上理由即可", show_alert=True)
+            return
         case _:
             submission_meta['reviewer'][query.from_user.id][2] = int(
                 query.data.split('.')[1])
@@ -177,6 +185,36 @@ async def reject_submission(update: Update, context: ContextTypes.DEFAULT_TYPE):
         InlineKeyboardButton("暂无理由", callback_data="REASON.NONE")
     ])
     await review_message.edit_text(text=generate_submission_meta_string(submission_meta), reply_markup=InlineKeyboardMarkup(inline_keyboard_content))
+
+
+async def send_custom_rejection_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not update.message.reply_to_message:
+        return
+    review_message = update.message.reply_to_message
+    # if there is not a submission_meta in the review_message
+    if 'submission_meta: ' not in review_message.text:
+        return
+    submission_meta = pickle.loads(base64.urlsafe_b64decode(
+        review_message.text.split('submission_meta: ')[-1]))
+    # if the submission has not been rejected yet
+    if get_submission_status(submission_meta)[0] not in [SubmissionStatus.REJECTED_NO_REASON, SubmissionStatus.REJECTED]:
+        return
+    # if the reviewer has not rejected the submission
+    if update.message.from_user.id not in submission_meta['reviewer'] or submission_meta['reviewer'][update.message.from_user.id][2] in [ReviewChoice.SFW, ReviewChoice.NSFW]:
+        await update.message.reply_text("😂 你没有投拒绝票")
+        return
+    # if the reason has not been changed
+    if submission_meta['reviewer'][update.message.from_user.id][2] == update.message.text:
+        return
+    
+    submission_meta['reviewer'][update.message.from_user.id][2] = update.message.text
+    await review_message.edit_text(text=generate_submission_meta_string(submission_meta))
+
+    # delete the custom rejection reason message if the bot can
+    try:
+        await update.message.delete()
+    except:
+        pass
 
 
 def get_decision(submission_meta, reviewer):
@@ -240,6 +278,30 @@ def get_rejection_reason_text(option):
     return option_text
 
 
+def get_submission_status(submission_meta):
+    status = -1
+    rejection_reason = ""
+    review_options = [reviewer[2]
+                      for reviewer in submission_meta['reviewer'].values()]
+    if review_options.count(ReviewChoice.NSFW) + review_options.count(ReviewChoice.SFW) >= APPROVE_NUMBER_REQUIRED:
+        status = SubmissionStatus.APPROVED
+    elif ReviewChoice.REJECT_DUPLICATE in review_options:
+        status = SubmissionStatus.REJECTED
+        rejection_reason = "重复投稿"
+    elif review_options.count(ReviewChoice.REJECT) >= REJECT_NUMBER_REQUIRED:
+        status = SubmissionStatus.REJECTED_NO_REASON
+    elif review_options.count(ReviewChoice.NSFW) + review_options.count(ReviewChoice.SFW) + review_options.count(ReviewChoice.REJECT) < len(review_options):
+        # At least one reviewer has given rejection reason
+        status = SubmissionStatus.REJECTED
+        for review_option in review_options:
+            if review_option not in [ReviewChoice.NSFW, ReviewChoice.SFW, ReviewChoice.REJECT]:
+                rejection_reason = get_rejection_reason_text(review_option)
+                break
+    else:
+        status = SubmissionStatus.PENDING
+    return status, rejection_reason
+
+
 def generate_submission_meta_string(submission_meta):
     # generate the submission_meta string from the submission_meta
     # approved submission string style:
@@ -293,34 +355,8 @@ def generate_submission_meta_string(submission_meta):
     #ABI_VER_6 #USER_submitter.id #SUBMITTER_submitter.id #SUBMITTER_UNSIGNED #PENDING
     '''
 
-    class SubmissionStatus:
-        PENDING = 0
-        APPROVED = 1
-        REJECTED = 2
-        REJECTED_NO_REASON = 3
-
     # get status and rejection reason
-    status = -1
-    rejection_reason = ""
-    review_options = [reviewer[2]
-                      for reviewer in submission_meta['reviewer'].values()]
-    if review_options.count(ReviewChoice.NSFW) + review_options.count(ReviewChoice.SFW) >= APPROVE_NUMBER_REQUIRED:
-        status = SubmissionStatus.APPROVED
-    elif ReviewChoice.REJECT_DUPLICATE in review_options:
-        status = SubmissionStatus.REJECTED
-        rejection_reason = "重复投稿"
-    elif review_options.count(ReviewChoice.REJECT) >= REJECT_NUMBER_REQUIRED:
-        status = SubmissionStatus.REJECTED_NO_REASON
-    elif review_options.count(ReviewChoice.NSFW) + review_options.count(ReviewChoice.SFW) + review_options.count(ReviewChoice.REJECT) < len(review_options):
-        # At least one reviewer has given rejection reason
-        status = SubmissionStatus.REJECTED
-        for review_option in review_options:
-            if review_option not in [ReviewChoice.NSFW, ReviewChoice.SFW, ReviewChoice.REJECT]:
-                rejection_reason = get_rejection_reason_text(review_option)
-                break
-    else:
-        status = SubmissionStatus.PENDING
-
+    status, rejection_reason = get_submission_status(submission_meta)
     # submitter_string
     submitter_id, submitter_username, submitter_fullname = submission_meta['submitter']
     submitter_string = f"Submitter: {submitter_fullname} ({f'@{submitter_username}, ' if submitter_username else ''}{submitter_id})\n"

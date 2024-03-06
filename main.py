@@ -1,8 +1,8 @@
 import logging
-from telegram.ext import ApplicationBuilder, CallbackQueryHandler
+from telegram.ext import ApplicationBuilder, CallbackQueryHandler, MessageHandler, filters
 from submit import submission_handler
 from utils import TG_TOKEN
-from review import approve_submission, reject_submission, query_decision, withdraw_decision, ReviewChoice, reject_reason
+from review import approve_submission, reject_submission, query_decision, withdraw_decision, ReviewChoice, reject_reason, send_custom_rejection_reason
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -21,6 +21,7 @@ if __name__ == '__main__':
             reject_submission, pattern=f"^({ReviewChoice.REJECT}|{ReviewChoice.REJECT_DUPLICATE})"),
         CallbackQueryHandler(query_decision, pattern=f"^{ReviewChoice.QUERY}"),
         CallbackQueryHandler(withdraw_decision, pattern=f"^{ReviewChoice.WITHDRAW}"),
-        CallbackQueryHandler(reject_reason, pattern=f"^REASON")
+        CallbackQueryHandler(reject_reason, pattern=f"^REASON"),
+        MessageHandler(filters.REPLY, send_custom_rejection_reason),
     ])
     application.run_polling()
