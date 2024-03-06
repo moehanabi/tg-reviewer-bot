@@ -108,7 +108,7 @@ async def reject_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
     submission_meta = pickle.loads(base64.urlsafe_b64decode(
         review_message.text.split('submission_meta: ')[-1]))
     # if the reviewer has not rejected the submission
-    if query.from_user.id not in list(submission_meta['reviewer'].keys()) or submission_meta['reviewer'][query.from_user.id][2] != ReviewChoice.REJECT:
+    if query.from_user.id not in submission_meta['reviewer'] or submission_meta['reviewer'][query.from_user.id][2] != ReviewChoice.REJECT:
         await query.answer("😂 你没有投拒绝票")
         return
 
@@ -180,7 +180,7 @@ async def reject_submission(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def get_decision(submission_meta, reviewer):
-    if reviewer not in list(submission_meta['reviewer'].keys()):
+    if reviewer not in submission_meta['reviewer']:
         return '😂 你还没有投票'
     choice = '你已经选择了：'
     match submission_meta['reviewer'][reviewer][2]:
@@ -205,7 +205,7 @@ async def query_decision(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def remove_decision(submission_meta, reviewer):
-    if reviewer in list(submission_meta['reviewer'].keys()):
+    if reviewer in submission_meta['reviewer']:
         del submission_meta['reviewer'][reviewer]
         return submission_meta, True
     else:
@@ -238,6 +238,7 @@ def get_rejection_reason_text(option):
     else:
         option_text = option
     return option_text
+
 
 def generate_submission_meta_string(submission_meta):
     # generate the submission_meta string from the submission_meta
