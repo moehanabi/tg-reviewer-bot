@@ -359,12 +359,10 @@ def generate_submission_meta_string(submission_meta):
     # status_title
     status_title = "❔ A pending review submission" if status == SubmissionStatus.PENDING else (
         "✅ An approved submission" if status == SubmissionStatus.APPROVED else "❌ A rejected submission")
-
+    submission_meta_text = f"submission_meta: {base64.urlsafe_b64encode(pickle.dumps(submission_meta)).decode()}" if status != SubmissionStatus.APPROVED else ""
     return dedent(f'''\
 {status_title}
 
 {submitter_string}
 {reviewers_string}
-Status: {status_string}
-
-submission_meta: {base64.urlsafe_b64encode(pickle.dumps(submission_meta)).decode()}''')
+Status: {status_string}{submission_meta_text}''')
