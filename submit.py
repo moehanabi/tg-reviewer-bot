@@ -24,17 +24,6 @@ async def confirm_submission(update: Update, context: ContextTypes.DEFAULT_TYPE)
     elif query.data.startswith(("anonymous", "realname")):
         if query.data.startswith("realname"):
             submission['text'] += f"\n\nby {user.full_name}"
-
-        submission_meta = {
-            "submitter": [user.id, user.username, user.full_name],
-            "reviewer": {},
-            "media_id_list": submission['media_id_list'],
-            "media_type_list": submission['media_type_list'],
-            "documents_id_list": submission['document_id_list'],
-            "document_type_list": submission['document_type_list'],
-            "text": submission['text'],
-        }
-
         submission_messages = await send_submission(
             context=context,
             chat_id=TG_REVIEWER_GROUP,
@@ -44,6 +33,15 @@ async def confirm_submission(update: Update, context: ContextTypes.DEFAULT_TYPE)
             document_type_list=submission['document_type_list'],
             text=submission['text']
         )
+        submission_meta = {
+            "submitter": [user.id, user.username, user.full_name, submission['first_message_id']],
+            "reviewer": {},
+            "media_id_list": submission['media_id_list'],
+            "media_type_list": submission['media_type_list'],
+            "documents_id_list": submission['document_id_list'],
+            "document_type_list": submission['document_type_list'],
+            "text": submission['text'],
+        }
         await reply_review_message(submission_messages[0], submission_meta)
         await query.edit_message_text(text="投稿成功")
 
@@ -78,6 +76,8 @@ async def collect_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if message.document:
         submission['document_id_list'].append(message.document.file_id)
         submission['document_type_list'].append("document")
+    if submission['first_message_id'] is None:
+        submission['first_message_id'] = message.message_id
 
     # show preview of all messages this user has sent
     submission['last_preview_messages'].extend(await send_submission(context=context, chat_id=update.effective_chat.id, media_id_list=submission['media_id_list'], media_type_list=submission['media_type_list'], documents_id_list=submission['document_id_list'], document_type_list=submission['document_type_list'], text=submission['text']))
@@ -113,6 +113,7 @@ async def handle_new_submission(update: Update, context: ContextTypes.DEFAULT_TY
         'user_name': update.effective_user.full_name,
         'last_preview_messages': [],
         'last_confirm_button': None,
+        'first_message_id': None,
     }
     return COLLECTING
 

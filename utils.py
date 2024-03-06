@@ -1,5 +1,5 @@
 import os
-from telegram import InputMediaPhoto, InputMediaVideo
+from telegram import InputMediaPhoto, InputMediaVideo, ReplyParameters
 from telegram.ext import ContextTypes
 
 # get args from environment virables
@@ -56,3 +56,10 @@ async def send_submission(context: ContextTypes.DEFAULT_TYPE, chat_id, media_id_
         sent_messages.extend(await send_group(context=context, chat_id=chat_id, item_list=documents_id_list, type_list=document_type_list, text=text))
 
     return sent_messages
+
+
+async def send_result_to_submitter(context, submitter_id, submit_message_id, message, inline_keyboard_markup=None):
+    try:
+        await context.bot.send_message(chat_id=submitter_id, text=message, reply_parameters=ReplyParameters(submit_message_id, allow_sending_without_reply=True), reply_markup=inline_keyboard_markup)
+    except:
+        pass

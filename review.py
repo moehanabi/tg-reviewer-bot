@@ -1,7 +1,7 @@
 from textwrap import dedent
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
-from utils import TG_PUBLISH_CHANNEL, APPROVE_NUMBER_REQUIRED, REJECT_NUMBER_REQUIRED, REJECTION_REASON, send_submission
+from utils import TG_PUBLISH_CHANNEL, APPROVE_NUMBER_REQUIRED, REJECT_NUMBER_REQUIRED, REJECTION_REASON, send_submission, send_result_to_submitter
 import pickle
 import base64
 
@@ -63,7 +63,6 @@ async def reply_review_message(first_submission_message, submission_meta):
         ]
     )
 
-    submitter_id, submitter_username, submitter_fullname = submission_meta['submitter']
     await first_submission_message.reply_text(generate_submission_meta_string(submission_meta), reply_markup=inline_keyboard)
 
 
@@ -97,6 +96,8 @@ async def approve_submission(update: Update, context: ContextTypes.DEFAULT_TYPE)
         return
     # else if the submission has been approved by enough reviewers
     await query.answer("✅ 投票成功，此条投稿已通过")
+    # send result to submitter
+    await send_result_to_submitter(context, submission_meta['submitter'][0], submission_meta['submitter'][3], "🎉 恭喜，投稿已通过审核")
     # then send this submission to the publish channel
     # if the submission is nsfw
     if ReviewChoice.NSFW in review_options:
@@ -132,6 +133,8 @@ async def reject_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 query.data.split('.')[1])
     await query.answer()
     await review_message.edit_text(text=generate_submission_meta_string(submission_meta))
+    # send result to submitter
+    await send_result_to_submitter(context, submission_meta['submitter'][0], submission_meta['submitter'][3], f"😢 很抱歉，投稿未通过审核。\n原因：{get_rejection_reason_text(submission_meta['reviewer'][query.from_user.id][2])}")
 
 
 async def reject_submission(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -152,6 +155,8 @@ async def reject_submission(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reviewer_username, reviewer_fullname, action]
         await query.answer("✅ 投票成功，此条投稿已被拒绝")
         await review_message.edit_text(text=generate_submission_meta_string(submission_meta))
+        # send result to submitter
+        await send_result_to_submitter(context, submission_meta['submitter'][0], submission_meta['submitter'][3], f"😢 很抱歉，投稿未通过审核。\n原因：{get_rejection_reason_text(submission_meta['reviewer'][query.from_user.id][2])}")
         return
     # else if the reviewer has already approved or rejected the submission
     if reviewer_id in list(submission_meta['reviewer']):
@@ -203,13 +208,21 @@ async def send_custom_rejection_reason(update: Update, context: ContextTypes.DEF
     if update.message.from_user.id not in submission_meta['reviewer'] or submission_meta['reviewer'][update.message.from_user.id][2] in [ReviewChoice.SFW, ReviewChoice.NSFW]:
         await update.message.reply_text("😂 你没有投拒绝票")
         return
+    # if the reviewer has rejected the duplicate submission without other reviewer rejecting it
+    options = [reviewer[2] for reviewer in submission_meta['reviewer'].values()]
+    approve_num = options.count(ReviewChoice.NSFW) + options.count(ReviewChoice.SFW)
+    if submission_meta['reviewer'][update.message.from_user.id][2] == ReviewChoice.REJECT_DUPLICATE and approve_num + 1 == len(options):
+        await update.message.reply_text("😢 重复投稿一票否决不可修改理由")
+        return
     # if the reason has not been changed
     if submission_meta['reviewer'][update.message.from_user.id][2] == update.message.text:
         return
-    
+
     submission_meta['reviewer'][update.message.from_user.id][2] = update.message.text
     await review_message.edit_text(text=generate_submission_meta_string(submission_meta))
 
+    # send result to submitter
+    await send_result_to_submitter(context, submission_meta['submitter'][0], submission_meta['submitter'][3], f"😢 很抱歉，投稿未通过审核。\n原因：{update.message.text}")
     # delete the custom rejection reason message if the bot can
     try:
         await update.message.delete()
@@ -273,6 +286,8 @@ def get_rejection_reason_text(option):
             option_text = REJECTION_REASON[option]
         elif option == len(REJECTION_REASON):
             option_text = "暂无理由"
+    elif option == ReviewChoice.REJECT_DUPLICATE:
+        option_text = "已在频道发布过或已有人投稿过"
     else:
         option_text = option
     return option_text
@@ -285,12 +300,9 @@ def get_submission_status(submission_meta):
                       for reviewer in submission_meta['reviewer'].values()]
     if review_options.count(ReviewChoice.NSFW) + review_options.count(ReviewChoice.SFW) >= APPROVE_NUMBER_REQUIRED:
         status = SubmissionStatus.APPROVED
-    elif ReviewChoice.REJECT_DUPLICATE in review_options:
-        status = SubmissionStatus.REJECTED
-        rejection_reason = "重复投稿"
     elif review_options.count(ReviewChoice.REJECT) >= REJECT_NUMBER_REQUIRED:
         status = SubmissionStatus.REJECTED_NO_REASON
-    elif review_options.count(ReviewChoice.NSFW) + review_options.count(ReviewChoice.SFW) + review_options.count(ReviewChoice.REJECT) < len(review_options):
+    elif ReviewChoice.REJECT_DUPLICATE in review_options or review_options.count(ReviewChoice.NSFW) + review_options.count(ReviewChoice.SFW) + review_options.count(ReviewChoice.REJECT) < len(review_options):
         # At least one reviewer has given rejection reason
         status = SubmissionStatus.REJECTED
         for review_option in review_options:
@@ -358,7 +370,7 @@ def generate_submission_meta_string(submission_meta):
     # get status and rejection reason
     status, rejection_reason = get_submission_status(submission_meta)
     # submitter_string
-    submitter_id, submitter_username, submitter_fullname = submission_meta['submitter']
+    submitter_id, submitter_username, submitter_fullname, _ = submission_meta['submitter']
     submitter_string = f"Submitter: {submitter_fullname} ({f'@{submitter_username}, ' if submitter_username else ''}{submitter_id})\n"
 
     # reviewers_string
@@ -375,8 +387,8 @@ def generate_submission_meta_string(submission_meta):
                     option_text = "🟡 Approved as NSFW"
                 case ReviewChoice.REJECT:
                     option_text = "🔴 Rejected"
-                case ReviewChoice.REJECT_DUPLICATE:
-                    option_text = "🔴 Rejected as 重复投稿"
+                # case ReviewChoice.REJECT_DUPLICATE:
+                #     option_text = "🔴 Rejected as 重复投稿"
                 case _:
                     option_text = f"🔴 Rejected as {get_rejection_reason_text(option)}"
             reviewers_string += f"\n- {option_text} by {reviewer_fullname} ({f'@{reviewer_username}, ' if reviewer_username else ''}{reviewer_id})"
