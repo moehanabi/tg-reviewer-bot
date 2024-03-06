@@ -1,7 +1,7 @@
 from textwrap import dedent
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
-from utils import TG_PUBLISH_CHANNEL, APPROVE_NUMBER_REQUIRED, REJECT_NUMBER_REQUIRED, send_submission
+from utils import TG_PUBLISH_CHANNEL, APPROVE_NUMBER_REQUIRED, REJECT_NUMBER_REQUIRED, REJECTION_REASON, send_submission
 import pickle
 import base64
 
@@ -102,6 +102,30 @@ async def approve_submission(update: Update, context: ContextTypes.DEFAULT_TYPE)
     await review_message.edit_text(text=generate_submission_meta_string(submission_meta))
 
 
+async def reject_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    review_message = update.effective_message
+    submission_meta = pickle.loads(base64.urlsafe_b64decode(
+        review_message.text.split('submission_meta: ')[-1]))
+    # if the reviewer has not rejected the submission
+    if query.from_user.id not in list(submission_meta['reviewer'].keys()) or submission_meta['reviewer'][query.from_user.id][2] != ReviewChoice.REJECT:
+        await query.answer("😂 你没有投拒绝票")
+        return
+
+    # if the reviewer has rejected the submission
+    match query.data:
+        case "REASON.NONE":
+            submission_meta['reviewer'][query.from_user.id][2] = len(
+                REJECTION_REASON)
+        case "REASON.OTHER":
+            pass
+        case _:
+            submission_meta['reviewer'][query.from_user.id][2] = int(
+                query.data.split('.')[1])
+    await query.answer()
+    await review_message.edit_text(text=generate_submission_meta_string(submission_meta))
+
+
 async def reject_submission(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
 
@@ -139,7 +163,20 @@ async def reject_submission(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     # else if the submission has been rejected by enough reviewers
     await query.answer("✅ 投票成功，此条投稿已被拒绝")
-    await review_message.edit_text(text=generate_submission_meta_string(submission_meta))
+    # send the rejection reason options inline keyboard
+    # show inline keyboard in 2 cols
+    inline_keyboard_content = []
+    for i in range(0, len(REJECTION_REASON), 2):
+        inline_keyboard_content.append(
+            [InlineKeyboardButton(REJECTION_REASON[i], callback_data=f"REASON.{i}")])
+        if i+1 < len(REJECTION_REASON):
+            inline_keyboard_content[-1].append(
+                InlineKeyboardButton(REJECTION_REASON[i+1], callback_data=f"REASON.{i+1}"))
+    inline_keyboard_content.append([
+        InlineKeyboardButton("自定义理由", callback_data="REASON.OTHER"),
+        InlineKeyboardButton("暂无理由", callback_data="REASON.NONE")
+    ])
+    await review_message.edit_text(text=generate_submission_meta_string(submission_meta), reply_markup=InlineKeyboardMarkup(inline_keyboard_content))
 
 
 def get_decision(submission_meta, reviewer):
@@ -190,6 +227,17 @@ async def withdraw_decision(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await query.answer("😂 你还没有投票")
 
+
+def get_rejection_reason_text(option):
+    # rejection reason is an int value, see reject_reason()
+    if isinstance(option, int):
+        if option < len(REJECTION_REASON):
+            option_text = REJECTION_REASON[option]
+        elif option == len(REJECTION_REASON):
+            option_text = "暂无理由"
+    else:
+        option_text = option
+    return option_text
 
 def generate_submission_meta_string(submission_meta):
     # generate the submission_meta string from the submission_meta
@@ -267,7 +315,7 @@ def generate_submission_meta_string(submission_meta):
         status = SubmissionStatus.REJECTED
         for review_option in review_options:
             if review_option not in [ReviewChoice.NSFW, ReviewChoice.SFW, ReviewChoice.REJECT]:
-                rejection_reason = review_option
+                rejection_reason = get_rejection_reason_text(review_option)
                 break
     else:
         status = SubmissionStatus.PENDING
@@ -292,6 +340,8 @@ def generate_submission_meta_string(submission_meta):
                     option_text = "🔴 Rejected"
                 case ReviewChoice.REJECT_DUPLICATE:
                     option_text = "🔴 Rejected as 重复投稿"
+                case _:
+                    option_text = f"🔴 Rejected as {get_rejection_reason_text(option)}"
             reviewers_string += f"\n- {option_text} by {reviewer_fullname} ({f'@{reviewer_username}, ' if reviewer_username else ''}{reviewer_id})"
 
     # status_string
