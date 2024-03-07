@@ -374,6 +374,7 @@ def generate_submission_meta_string(submission_meta):
     submitter_string = f"Submitter: {submitter_fullname} ({f'@{submitter_username}, ' if submitter_username else ''}{submitter_id})\n"
 
     # reviewers_string
+    is_nsfw = False
     reviewers_string = "Reviewers: "
     if status == SubmissionStatus.PENDING:
         reviewers_string += "在结果公布前暂时隐藏"
@@ -385,6 +386,7 @@ def generate_submission_meta_string(submission_meta):
                     option_text = "🟢 Approved as SFW"
                 case ReviewChoice.NSFW:
                     option_text = "🟡 Approved as NSFW"
+                    is_nsfw = True
                 case ReviewChoice.REJECT:
                     option_text = "🔴 Rejected"
                 # case ReviewChoice.REJECT_DUPLICATE:
@@ -399,7 +401,7 @@ def generate_submission_meta_string(submission_meta):
         case SubmissionStatus.PENDING:
             status_string = "Pending"
         case SubmissionStatus.APPROVED:
-            status_string = "Approved as SFW" if ReviewChoice.NSFW not in review_options else "Approved as NSFW"
+            status_string = "Approved as SFW" if is_nsfw else "Approved as NSFW"
         case SubmissionStatus.REJECTED:
             status_string = f"Rejected as {rejection_reason}"
         case SubmissionStatus.REJECTED_NO_REASON:
