@@ -100,13 +100,21 @@ async def approve_submission(update: Update, context: ContextTypes.DEFAULT_TYPE)
     await send_result_to_submitter(context, submission_meta['submitter'][0], submission_meta['submitter'][3], "🎉 恭喜，投稿已通过审核")
     # then send this submission to the publish channel
     # if the submission is nsfw
+    skip_all = None
     if ReviewChoice.NSFW in review_options:
-        inline_keyboard = InlineKeyboardMarkup([[InlineKeyboardButton(
-            "跳到下一条", callback_data="skip")]])
-        await context.bot.send_message(
+        inline_keyboard = InlineKeyboardMarkup(
+            [[InlineKeyboardButton("跳到下一条", url=f'https://t.me/')]])
+        skip_all = await context.bot.send_message(
             chat_id=TG_PUBLISH_CHANNEL, text="⚠️ #NSFW 提前预警", reply_markup=inline_keyboard)
 
     sent_messages = await send_submission(context=context, chat_id=TG_PUBLISH_CHANNEL, media_id_list=submission_meta['media_id_list'], media_type_list=submission_meta['media_type_list'], documents_id_list=submission_meta['documents_id_list'], document_type_list=submission_meta['document_type_list'], text=submission_meta['text'])
+    # edit the skip_all message
+    if skip_all:
+        url_parts = sent_messages[-1].link.rsplit('/', 1)
+        next_url = url_parts[0] + '/' + str(int(url_parts[-1]) + 1)
+        inline_keyboard = InlineKeyboardMarkup(
+            [[InlineKeyboardButton("跳到下一条", url=next_url)]])
+        await skip_all.edit_text(text="⚠️ #NSFW 提前预警", reply_markup=inline_keyboard)
     await review_message.edit_text(text=generate_submission_meta_string(submission_meta))
 
 
