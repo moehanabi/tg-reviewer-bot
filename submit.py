@@ -40,7 +40,6 @@ async def confirm_submission(update: Update, context: ContextTypes.DEFAULT_TYPE)
             "media_type_list": submission['media_type_list'],
             "documents_id_list": submission['document_id_list'],
             "document_type_list": submission['document_type_list'],
-            "text": submission['text'],
         }
         await reply_review_message(submission_messages[0], submission_meta)
         await query.edit_message_text(text="投稿成功")

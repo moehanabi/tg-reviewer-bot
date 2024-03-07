@@ -107,7 +107,7 @@ async def approve_submission(update: Update, context: ContextTypes.DEFAULT_TYPE)
         skip_all = await context.bot.send_message(
             chat_id=TG_PUBLISH_CHANNEL, text="⚠️ #NSFW 提前预警", reply_markup=inline_keyboard)
 
-    sent_messages = await send_submission(context=context, chat_id=TG_PUBLISH_CHANNEL, media_id_list=submission_meta['media_id_list'], media_type_list=submission_meta['media_type_list'], documents_id_list=submission_meta['documents_id_list'], document_type_list=submission_meta['document_type_list'], text=submission_meta['text'])
+    sent_messages = await send_submission(context=context, chat_id=TG_PUBLISH_CHANNEL, media_id_list=submission_meta['media_id_list'], media_type_list=submission_meta['media_type_list'], documents_id_list=submission_meta['documents_id_list'], document_type_list=submission_meta['document_type_list'], text=origin_message.text or origin_message.caption)
     # edit the skip_all message
     if skip_all:
         url_parts = sent_messages[-1].link.rsplit('/', 1)
@@ -217,8 +217,10 @@ async def send_custom_rejection_reason(update: Update, context: ContextTypes.DEF
         await update.message.reply_text("😂 你没有投拒绝票")
         return
     # if the reviewer has rejected the duplicate submission without other reviewer rejecting it
-    options = [reviewer[2] for reviewer in submission_meta['reviewer'].values()]
-    approve_num = options.count(ReviewChoice.NSFW) + options.count(ReviewChoice.SFW)
+    options = [reviewer[2]
+               for reviewer in submission_meta['reviewer'].values()]
+    approve_num = options.count(ReviewChoice.NSFW) + \
+        options.count(ReviewChoice.SFW)
     if submission_meta['reviewer'][update.message.from_user.id][2] == ReviewChoice.REJECT_DUPLICATE and approve_num + 1 == len(options):
         await update.message.reply_text("😢 重复投稿一票否决不可修改理由")
         return
