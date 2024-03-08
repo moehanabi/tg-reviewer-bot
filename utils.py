@@ -12,7 +12,7 @@ REJECT_NUMBER_REQUIRED = 2
 REJECTION_REASON = os.environ.get('TG_REJECTION_REASON').split(":")
 
 
-async def send_group(context: ContextTypes.DEFAULT_TYPE, chat_id, item_list, type_list, text=""):
+async def send_group(context: ContextTypes.DEFAULT_TYPE, chat_id, item_list, type_list, text="", has_spoiler=False):
     sent_messages = []
 
     # use item_list and type_list to build a list of telegram.InputMediaDocument, telegram.InputMediaPhoto, telegram.InputMediaVideo
@@ -20,9 +20,9 @@ async def send_group(context: ContextTypes.DEFAULT_TYPE, chat_id, item_list, typ
     for i in range(len(item_list)):
         match type_list[i]:
             case "photo":
-                media.append(InputMediaPhoto(item_list[i]))
+                media.append(InputMediaPhoto(item_list[i], has_spoiler=has_spoiler))
             case "video":
-                media.append(InputMediaVideo(item_list[i]))
+                media.append(InputMediaVideo(item_list[i], has_spoiler=has_spoiler))
             case "document":
                 media.append(InputMediaDocument(item_list[i]))
 
@@ -33,16 +33,16 @@ async def send_group(context: ContextTypes.DEFAULT_TYPE, chat_id, item_list, typ
             continue
         match type(portion[0]):
             case "InputMediaPhoto":
-                sent_messages.append(await context.bot.send_photo(chat_id=chat_id, photo=portion[0].file_id, caption=text))
+                sent_messages.append(await context.bot.send_photo(chat_id=chat_id, photo=portion[0].file_id, caption=text, has_spoiler=has_spoiler))
             case "InputMediaVideo":
-                sent_messages.append(await context.bot.send_video(chat_id=chat_id, video=portion[0].file_id, caption=text))
+                sent_messages.append(await context.bot.send_video(chat_id=chat_id, video=portion[0].file_id, caption=text, has_spoiler=has_spoiler))
             case "InputMediaDocument":
                 sent_messages.append(await context.bot.send_document(chat_id=chat_id, document=portion[0].file_id, caption=text))
 
     return sent_messages
 
 
-async def send_submission(context: ContextTypes.DEFAULT_TYPE, chat_id, media_id_list, media_type_list, documents_id_list, document_type_list, text=""):
+async def send_submission(context: ContextTypes.DEFAULT_TYPE, chat_id, media_id_list, media_type_list, documents_id_list, document_type_list, text="", has_spoiler=False):
     sent_messages = []
 
     # no media or documents, just send text
@@ -52,7 +52,7 @@ async def send_submission(context: ContextTypes.DEFAULT_TYPE, chat_id, media_id_
 
     # send media and documents
     if media_id_list:
-        sent_messages.extend(await send_group(context=context, chat_id=chat_id, item_list=media_id_list, type_list=media_type_list, text=text))
+        sent_messages.extend(await send_group(context=context, chat_id=chat_id, item_list=media_id_list, type_list=media_type_list, text=text, has_spoiler=has_spoiler))
     if documents_id_list:
         sent_messages.extend(await send_group(context=context, chat_id=chat_id, item_list=documents_id_list, type_list=document_type_list, text=text))
 

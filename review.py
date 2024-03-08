@@ -103,13 +103,15 @@ async def approve_submission(update: Update, context: ContextTypes.DEFAULT_TYPE)
     # then send this submission to the publish channel
     # if the submission is nsfw
     skip_all = None
+    has_spoiler = False
     if ReviewChoice.NSFW in review_options:
+        has_spoiler = True
         inline_keyboard = InlineKeyboardMarkup(
             [[InlineKeyboardButton("跳到下一条", url=f'https://t.me/')]])
         skip_all = await context.bot.send_message(
             chat_id=TG_PUBLISH_CHANNEL, text="⚠️ #NSFW 提前预警", reply_markup=inline_keyboard)
 
-    sent_messages = await send_submission(context=context, chat_id=TG_PUBLISH_CHANNEL, media_id_list=submission_meta['media_id_list'], media_type_list=submission_meta['media_type_list'], documents_id_list=submission_meta['documents_id_list'], document_type_list=submission_meta['document_type_list'], text=origin_message.text or origin_message.caption)
+    sent_messages = await send_submission(context=context, chat_id=TG_PUBLISH_CHANNEL, media_id_list=submission_meta['media_id_list'], media_type_list=submission_meta['media_type_list'], documents_id_list=submission_meta['documents_id_list'], document_type_list=submission_meta['document_type_list'], text=origin_message.text or origin_message.caption, has_spoiler=has_spoiler)
     # edit the skip_all message
     if skip_all:
         url_parts = sent_messages[-1].link.rsplit('/', 1)
