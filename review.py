@@ -1,6 +1,8 @@
 from textwrap import dedent
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
+from telegram.constants import ParseMode
+from telegram.helpers import escape_markdown
 from utils import TG_PUBLISH_CHANNEL, TG_REJECTED_CHANNEL, APPROVE_NUMBER_REQUIRED, REJECT_NUMBER_REQUIRED, REJECTION_REASON, send_submission, send_result_to_submitter
 import pickle
 import base64
@@ -63,7 +65,7 @@ async def reply_review_message(first_submission_message, submission_meta):
         ]
     )
 
-    await first_submission_message.reply_text(generate_submission_meta_string(submission_meta), reply_markup=inline_keyboard)
+    await first_submission_message.reply_text(generate_submission_meta_string(submission_meta), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=inline_keyboard)
 
 
 async def approve_submission(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -75,7 +77,7 @@ async def approve_submission(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     reviewer_id, reviewer_username, reviewer_fullname = query.from_user.id, query.from_user.username, query.from_user.full_name
     submission_meta = pickle.loads(base64.urlsafe_b64decode(
-        review_message.text.split('submission_meta: ')[-1]))
+        review_message.text_markdown_v2_urled.split('/')[-1][:-1]))
 
     # if the reviewer has already approved or rejected the submission
     if reviewer_id in list(submission_meta['reviewer']):
@@ -91,7 +93,7 @@ async def approve_submission(update: Update, context: ContextTypes.DEFAULT_TYPE)
     # if the submission has not been approved by enough reviewers
     if review_options.count(ReviewChoice.NSFW) + review_options.count(ReviewChoice.SFW) < APPROVE_NUMBER_REQUIRED:
         await review_message.edit_text(
-            text=review_message.text.split('submission_meta: ')[0] + 'submission_meta: ' + base64.urlsafe_b64encode(pickle.dumps(submission_meta)).decode(), reply_markup=review_message.reply_markup)
+            text=generate_submission_meta_string(submission_meta), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=review_message.reply_markup)
         await query.answer(f"✅ 投票成功！{get_decision(submission_meta, reviewer_id)}")
         return
     # else if the submission has been approved by enough reviewers
@@ -115,14 +117,14 @@ async def approve_submission(update: Update, context: ContextTypes.DEFAULT_TYPE)
         inline_keyboard = InlineKeyboardMarkup(
             [[InlineKeyboardButton("跳到下一条", url=next_url)]])
         await skip_all.edit_text(text="⚠️ #NSFW 提前预警", reply_markup=inline_keyboard)
-    await review_message.edit_text(text=generate_submission_meta_string(submission_meta))
+    await review_message.edit_text(text=generate_submission_meta_string(submission_meta), parse_mode=ParseMode.MARKDOWN_V2)
 
 
 async def reject_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     review_message = update.effective_message
     submission_meta = pickle.loads(base64.urlsafe_b64decode(
-        review_message.text.split('submission_meta: ')[-1]))
+        review_message.text_markdown_v2_urled.split('/')[-1][:-1]))
     # if the reviewer has not rejected the submission
     if query.from_user.id not in submission_meta['reviewer'] or submission_meta['reviewer'][query.from_user.id][2] != ReviewChoice.REJECT:
         await query.answer("😂 你没有投拒绝票")
@@ -144,7 +146,7 @@ async def reject_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if TG_REJECTED_CHANNEL:
         inline_keyboard = InlineKeyboardMarkup(
             [review_message.reply_markup.inline_keyboard[-1]])
-    await review_message.edit_text(text=generate_submission_meta_string(submission_meta), reply_markup=inline_keyboard)
+    await review_message.edit_text(text=generate_submission_meta_string(submission_meta), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=inline_keyboard)
     # send result to submitter
     await send_result_to_submitter(context, submission_meta['submitter'][0], submission_meta['submitter'][3], f"😢 很抱歉，投稿未通过审核。\n原因：{get_rejection_reason_text(submission_meta['reviewer'][query.from_user.id][2])}")
 
@@ -157,7 +159,7 @@ async def reject_submission(update: Update, context: ContextTypes.DEFAULT_TYPE):
     origin_message = review_message.reply_to_message
     reviewer_id, reviewer_username, reviewer_fullname = query.from_user.id, query.from_user.username, query.from_user.full_name
     submission_meta = pickle.loads(base64.urlsafe_b64decode(
-        review_message.text.split('submission_meta: ')[-1]))
+        review_message.text_markdown_v2_urled.split('/')[-1][:-1]))
 
     # if REJECT_DUPLICATE, only one reviewer is enough
     if action == ReviewChoice.REJECT_DUPLICATE:
@@ -172,7 +174,7 @@ async def reject_submission(update: Update, context: ContextTypes.DEFAULT_TYPE):
             sent_message = await send_submission(context=context, chat_id=TG_REJECTED_CHANNEL, media_id_list=submission_meta['media_id_list'], media_type_list=submission_meta['media_type_list'], documents_id_list=submission_meta['documents_id_list'], document_type_list=submission_meta['document_type_list'], text=origin_message.text or origin_message.caption)
             inline_keyboard = InlineKeyboardMarkup(
                 [[InlineKeyboardButton("在拒稿频道中查看", url=sent_message[-1].link)]])
-        await review_message.edit_text(text=generate_submission_meta_string(submission_meta), reply_markup=inline_keyboard)
+        await review_message.edit_text(text=generate_submission_meta_string(submission_meta), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=inline_keyboard)
         # send result to submitter
         await send_result_to_submitter(context, submission_meta['submitter'][0], submission_meta['submitter'][3], f"😢 很抱歉，投稿未通过审核。\n原因：{get_rejection_reason_text(submission_meta['reviewer'][query.from_user.id][2])}")
         return
@@ -189,7 +191,7 @@ async def reject_submission(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # if the submission has not been rejected by enough reviewers
     if review_options.count(ReviewChoice.REJECT) < REJECT_NUMBER_REQUIRED:
         await review_message.edit_text(
-            text=review_message.text.split('submission_meta: ')[0] + 'submission_meta: ' + base64.urlsafe_b64encode(pickle.dumps(submission_meta)).decode(), reply_markup=review_message.reply_markup)
+            text=generate_submission_meta_string(submission_meta), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=review_message.reply_markup)
         await query.answer(f"✅ 投票成功！{get_decision(submission_meta, reviewer_id)}")
         return
     # else if the submission has been rejected by enough reviewers
@@ -212,7 +214,7 @@ async def reject_submission(update: Update, context: ContextTypes.DEFAULT_TYPE):
         sent_message = await send_submission(context=context, chat_id=TG_REJECTED_CHANNEL, media_id_list=submission_meta['media_id_list'], media_type_list=submission_meta['media_type_list'], documents_id_list=submission_meta['documents_id_list'], document_type_list=submission_meta['document_type_list'], text=origin_message.text or origin_message.caption)
         inline_keyboard_content.append(
             [InlineKeyboardButton("在拒稿频道中查看", url=sent_message[-1].link)])
-    await review_message.edit_text(text=generate_submission_meta_string(submission_meta), reply_markup=InlineKeyboardMarkup(inline_keyboard_content))
+    await review_message.edit_text(text=generate_submission_meta_string(submission_meta), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=InlineKeyboardMarkup(inline_keyboard_content))
 
 
 async def send_custom_rejection_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -220,10 +222,10 @@ async def send_custom_rejection_reason(update: Update, context: ContextTypes.DEF
         return
     review_message = update.message.reply_to_message
     # if there is not a submission_meta in the review_message
-    if 'submission_meta: ' not in review_message.text:
+    if '\u200b' not in review_message.text:
         return
     submission_meta = pickle.loads(base64.urlsafe_b64decode(
-        review_message.text.split('submission_meta: ')[-1]))
+        review_message.text_markdown_v2_urled.split('/')[-1][:-1]))
     # if the submission has not been rejected yet
     if get_submission_status(submission_meta)[0] not in [SubmissionStatus.REJECTED_NO_REASON, SubmissionStatus.REJECTED]:
         return
@@ -248,7 +250,7 @@ async def send_custom_rejection_reason(update: Update, context: ContextTypes.DEF
     if TG_REJECTED_CHANNEL:
         inline_keyboard = InlineKeyboardMarkup(
             [review_message.reply_markup.inline_keyboard[-1]])
-    await review_message.edit_text(text=generate_submission_meta_string(submission_meta), reply_markup=inline_keyboard)
+    await review_message.edit_text(text=generate_submission_meta_string(submission_meta), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=inline_keyboard)
 
     # send result to submitter
     await send_result_to_submitter(context, submission_meta['submitter'][0], submission_meta['submitter'][3], f"😢 很抱歉，投稿未通过审核。\n原因：{update.message.text}")
@@ -279,7 +281,7 @@ async def query_decision(update: Update, context: ContextTypes.DEFAULT_TYPE):
     review_message = update.effective_message
     reviewer = query.from_user.id
     submission_meta = pickle.loads(base64.urlsafe_b64decode(
-        review_message.text.split('submission_meta: ')[-1]))
+        review_message.text_markdown_v2_urled.split('/')[-1][:-1]))
 
     await query.answer(get_decision(submission_meta, reviewer))
 
@@ -298,11 +300,11 @@ async def withdraw_decision(update: Update, context: ContextTypes.DEFAULT_TYPE):
     review_message = update.effective_message
     reviewer = query.from_user.id
     submission_meta = pickle.loads(base64.urlsafe_b64decode(
-        review_message.text.split('submission_meta: ')[-1]))
+        review_message.text_markdown_v2_urled.split('/')[-1][:-1]))
 
     submission_meta, removed = remove_decision(submission_meta, reviewer)
     if removed:
-        await review_message.edit_text(text=review_message.text.split('submission_meta: ')[0] + 'submission_meta: ' + base64.urlsafe_b64encode(pickle.dumps(submission_meta)).decode(), reply_markup=review_message.reply_markup)
+        await review_message.edit_text(text=generate_submission_meta_string(submission_meta), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=review_message.reply_markup)
         await query.answer("↩️ 已撤回")
     else:
         await query.answer("😂 你还没有投票")
@@ -439,10 +441,12 @@ def generate_submission_meta_string(submission_meta):
     # status_title
     status_title = "❔ A pending review submission" if status == SubmissionStatus.PENDING else (
         "✅ An approved submission" if status == SubmissionStatus.APPROVED else "❌ A rejected submission")
-    submission_meta_text = f"submission_meta: {base64.urlsafe_b64encode(pickle.dumps(submission_meta)).decode()}" if status != SubmissionStatus.APPROVED else ""
-    return dedent(f'''\
+    submission_meta_text = f"[\u200b](http://t.me/{base64.urlsafe_b64encode(pickle.dumps(submission_meta)).decode()})" if status != SubmissionStatus.APPROVED else ""
+    visible_content = escape_markdown(dedent(f'''\
 {status_title}
 
 {submitter_string}
 {reviewers_string}
-Status: {status_string}{submission_meta_text}''')
+Status: {status_string}'''), version=2)
+    # use Zero-width non-joiner and fake url(or the bot api will delete invalid link) to hide the submission_meta
+    return f"{visible_content}{submission_meta_text}"
