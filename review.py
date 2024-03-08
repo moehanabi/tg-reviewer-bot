@@ -408,51 +408,54 @@ def generate_submission_meta_string(submission_meta):
     status, rejection_reason = get_submission_status(submission_meta)
     # submitter_string
     submitter_id, submitter_username, submitter_fullname, _ = submission_meta['submitter']
-    submitter_string = f"Submitter: {submitter_fullname} ({f'@{submitter_username}, ' if submitter_username else ''}{submitter_id})\n"
+    submitter_string = f"投稿人：{submitter_fullname} ({f'@{submitter_username}, ' if submitter_username else ''}{submitter_id})\n"
 
     # reviewers_string
     is_nsfw = False
-    reviewers_string = "Reviewers: "
+    reviewers_string = "审稿人："
     if status == SubmissionStatus.PENDING:
         reviewers_string += "在结果公布前暂时隐藏"
     else:
         for reviewer_id, [reviewer_username, reviewer_fullname, option] in submission_meta['reviewer'].items():
             option_text = ""
+            option_sign = ""
             match option:
                 case ReviewChoice.SFW:
-                    option_text = "🟢 Approved as SFW"
+                    option_text = "以 SFW 通过"
+                    option_sign = "🟢"
                 case ReviewChoice.NSFW:
-                    option_text = "🟡 Approved as NSFW"
+                    option_text = "以 NSFW 通过"
+                    option_sign = "🟡"
                     is_nsfw = True
                 case ReviewChoice.REJECT:
-                    option_text = "🔴 Rejected"
-                # case ReviewChoice.REJECT_DUPLICATE:
-                #     option_text = "🔴 Rejected as 重复投稿"
+                    option_text = "拒稿"
+                    option_sign = "🔴"
                 case _:
-                    option_text = f"🔴 Rejected as {get_rejection_reason_text(option)}"
-            reviewers_string += f"\n- {option_text} by {reviewer_fullname} ({f'@{reviewer_username}, ' if reviewer_username else ''}{reviewer_id})"
+                    option_text = f"因为 {get_rejection_reason_text(option)} 拒稿"
+                    option_sign = "🔴"
+            reviewers_string += f"\n- {option_sign} 由 {reviewer_fullname} ({f'@{reviewer_username}, ' if reviewer_username else ''}{reviewer_id}) {option_text}"
 
     # status_string
     status_string = ""
     match status:
         case SubmissionStatus.PENDING:
-            status_string = "Pending"
+            status_string = "待审稿"
         case SubmissionStatus.APPROVED:
-            status_string = "Approved as SFW" if is_nsfw else "Approved as NSFW"
+            status_string = "以 SFW 通过" if is_nsfw else "以 NSFW 通过"
         case SubmissionStatus.REJECTED:
-            status_string = f"Rejected as {rejection_reason}"
+            status_string = f"因为 {rejection_reason} 被拒稿"
         case SubmissionStatus.REJECTED_NO_REASON:
-            status_string = "Pending"
+            status_string = "被拒稿，待选择理由"
 
     # status_title
-    status_title = "❔ A pending review submission" if status == SubmissionStatus.PENDING else (
-        "✅ An approved submission" if status == SubmissionStatus.APPROVED else "❌ A rejected submission")
+    status_title = "❔ 待审稿件" if status == SubmissionStatus.PENDING else (
+        "✅ 已通过稿件" if status == SubmissionStatus.APPROVED else "❌ 已拒绝稿件")
     submission_meta_text = f"[\u200b](http://t.me/{base64.urlsafe_b64encode(pickle.dumps(submission_meta)).decode()})" if status != SubmissionStatus.APPROVED else ""
     visible_content = escape_markdown(dedent(f'''\
 {status_title}
 
 {submitter_string}
 {reviewers_string}
-Status: {status_string}'''), version=2)
+当前状态：{status_string}'''), version=2)
     # use Zero-width non-joiner and fake url(or the bot api will delete invalid link) to hide the submission_meta
     return f"{visible_content}{submission_meta_text}"
