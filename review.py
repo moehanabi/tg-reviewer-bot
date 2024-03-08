@@ -435,27 +435,41 @@ def generate_submission_meta_string(submission_meta):
                     option_sign = "🔴"
             reviewers_string += f"\n- {option_sign} 由 {reviewer_fullname} ({f'@{reviewer_username}, ' if reviewer_username else ''}{reviewer_id}) {option_text}"
 
-    # status_string
+    # status_string and status_tag
     status_string = ""
+    status_tag = ""
     match status:
         case SubmissionStatus.PENDING:
             status_string = "待审稿"
+            status_tag = "#PENDING"
         case SubmissionStatus.APPROVED:
             status_string = "以 SFW 通过" if is_nsfw else "以 NSFW 通过"
+            status_tag = "#APPROVED #SFW" if not is_nsfw else "#APPROVED #NSFW"
         case SubmissionStatus.REJECTED:
             status_string = f"因为 {rejection_reason} 被拒稿"
+            status_tag = "#REJECTED"
         case SubmissionStatus.REJECTED_NO_REASON:
             status_string = "被拒稿，待选择理由"
+            status_tag = "#PENDING_FOR_REASON"
 
     # status_title
     status_title = "❔ 待审稿件" if status == SubmissionStatus.PENDING else (
         "✅ 已通过稿件" if status == SubmissionStatus.APPROVED else "❌ 已拒绝稿件")
+    # tags
+    tags = f"#USER_{submitter_id} #SUBMITTER_{submitter_id}"
+    if status != SubmissionStatus.PENDING:
+        for reviewer_id in submission_meta['reviewer'].keys():
+            tags += f" #USER_{reviewer_id} #REVIEWER_{reviewer_id}"
+    tags += f" {status_tag}"
+
     submission_meta_text = f"[\u200b](http://t.me/{base64.urlsafe_b64encode(pickle.dumps(submission_meta)).decode()})" if status != SubmissionStatus.APPROVED else ""
     visible_content = escape_markdown(dedent(f'''\
 {status_title}
 
 {submitter_string}
 {reviewers_string}
-当前状态：{status_string}'''), version=2)
+当前状态：{status_string}
+
+{tags}'''), version=2)
     # use Zero-width non-joiner and fake url(or the bot api will delete invalid link) to hide the submission_meta
     return f"{visible_content}{submission_meta_text}"
