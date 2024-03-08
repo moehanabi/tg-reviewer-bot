@@ -2,7 +2,7 @@ import logging
 from telegram.ext import ApplicationBuilder, CallbackQueryHandler, MessageHandler, filters
 from submit import submission_handler
 from utils import TG_TOKEN
-from review import approve_submission, reject_submission, query_decision, withdraw_decision, ReviewChoice, reject_reason, send_custom_rejection_reason
+from review import approve_submission, reject_submission, query_decision, withdraw_decision, ReviewChoice, reject_reason, send_custom_rejection_reason_or_append_message, append_message
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -16,12 +16,17 @@ if __name__ == '__main__':
     application.add_handler(submission_handler)
 
     application.add_handlers([
-        CallbackQueryHandler(approve_submission, pattern=f"^({ReviewChoice.SFW}|{ReviewChoice.NSFW})"),
+        CallbackQueryHandler(
+            approve_submission, pattern=f"^({ReviewChoice.SFW}|{ReviewChoice.NSFW})"),
         CallbackQueryHandler(
             reject_submission, pattern=f"^({ReviewChoice.REJECT}|{ReviewChoice.REJECT_DUPLICATE})"),
         CallbackQueryHandler(query_decision, pattern=f"^{ReviewChoice.QUERY}"),
-        CallbackQueryHandler(withdraw_decision, pattern=f"^{ReviewChoice.WITHDRAW}"),
+        CallbackQueryHandler(
+            withdraw_decision, pattern=f"^{ReviewChoice.WITHDRAW}"),
+        CallbackQueryHandler(
+            append_message, pattern=f"^{ReviewChoice.APPEND}"),
         CallbackQueryHandler(reject_reason, pattern=f"^REASON"),
-        MessageHandler(filters.REPLY, send_custom_rejection_reason),
+        MessageHandler(
+            filters.REPLY, send_custom_rejection_reason_or_append_message),
     ])
     application.run_polling()

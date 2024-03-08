@@ -19,6 +19,7 @@ submission_meta = {
     "media_type_list": [media1.type, media2.type, ...],
     "documents_id_list": [document1.id, document2.id, ...],
     "document_type_list": [document1.type, document2.type, ...],
+    "append": "审核注：...",
 }
 '''
 
@@ -30,6 +31,7 @@ class ReviewChoice:
     REJECT_DUPLICATE = '3'
     QUERY = '4'
     WITHDRAW = '5'
+    APPEND = '6'
 
 
 class SubmissionStatus:
@@ -60,11 +62,18 @@ async def reply_review_message(first_submission_message, submission_meta):
                     "❔ 查询我的投票", callback_data=f"{ReviewChoice.QUERY}.{first_submission_message.message_id}"),
                 InlineKeyboardButton(
                     "↩️ 撤回我的投票", callback_data=f"{ReviewChoice.WITHDRAW}.{first_submission_message.message_id}")
-            ]
+            ],
+            [InlineKeyboardButton(
+                "✒️ 添加备注", callback_data=f"{ReviewChoice.APPEND}"),]
         ]
     )
 
     await first_submission_message.reply_text(generate_submission_meta_string(submission_meta), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=inline_keyboard)
+
+
+async def append_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer("😂 只要回复本条消息并附上备注即可")
 
 
 async def approve_submission(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -110,7 +119,7 @@ async def approve_submission(update: Update, context: ContextTypes.DEFAULT_TYPE)
         skip_all = await context.bot.send_message(
             chat_id=TG_PUBLISH_CHANNEL, text="⚠️ #NSFW 提前预警", reply_markup=inline_keyboard)
 
-    sent_messages = await send_submission(context=context, chat_id=TG_PUBLISH_CHANNEL, media_id_list=submission_meta['media_id_list'], media_type_list=submission_meta['media_type_list'], documents_id_list=submission_meta['documents_id_list'], document_type_list=submission_meta['document_type_list'], text=origin_message.text or origin_message.caption, has_spoiler=has_spoiler)
+    sent_messages = await send_submission(context=context, chat_id=TG_PUBLISH_CHANNEL, media_id_list=submission_meta['media_id_list'], media_type_list=submission_meta['media_type_list'], documents_id_list=submission_meta['documents_id_list'], document_type_list=submission_meta['document_type_list'], text=(origin_message.text or origin_message.caption) + submission_meta['append'], has_spoiler=has_spoiler)
     # edit the skip_all message
     if skip_all:
         url_parts = sent_messages[-1].link.rsplit('/', 1)
@@ -176,7 +185,7 @@ async def reject_submission(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # send the submittion to rejected channel
         inline_keyboard = None
         if TG_REJECTED_CHANNEL:
-            sent_message = await send_submission(context=context, chat_id=TG_REJECTED_CHANNEL, media_id_list=submission_meta['media_id_list'], media_type_list=submission_meta['media_type_list'], documents_id_list=submission_meta['documents_id_list'], document_type_list=submission_meta['document_type_list'], text=origin_message.text or origin_message.caption)
+            sent_message = await send_submission(context=context, chat_id=TG_REJECTED_CHANNEL, media_id_list=submission_meta['media_id_list'], media_type_list=submission_meta['media_type_list'], documents_id_list=submission_meta['documents_id_list'], document_type_list=submission_meta['document_type_list'], text=(origin_message.text or origin_message.caption) + submission_meta['append'])
             inline_keyboard = InlineKeyboardMarkup(
                 [[InlineKeyboardButton("在拒稿频道中查看", url=sent_message[-1].link)]])
         await review_message.edit_text(text=generate_submission_meta_string(submission_meta), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=inline_keyboard)
@@ -216,13 +225,13 @@ async def reject_submission(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ])
     # send the submittion to rejected channel
     if TG_REJECTED_CHANNEL:
-        sent_message = await send_submission(context=context, chat_id=TG_REJECTED_CHANNEL, media_id_list=submission_meta['media_id_list'], media_type_list=submission_meta['media_type_list'], documents_id_list=submission_meta['documents_id_list'], document_type_list=submission_meta['document_type_list'], text=origin_message.text or origin_message.caption)
+        sent_message = await send_submission(context=context, chat_id=TG_REJECTED_CHANNEL, media_id_list=submission_meta['media_id_list'], media_type_list=submission_meta['media_type_list'], documents_id_list=submission_meta['documents_id_list'], document_type_list=submission_meta['document_type_list'], text=(origin_message.text or origin_message.caption) + submission_meta['append'])
         inline_keyboard_content.append(
             [InlineKeyboardButton("在拒稿频道中查看", url=sent_message[-1].link)])
     await review_message.edit_text(text=generate_submission_meta_string(submission_meta), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=InlineKeyboardMarkup(inline_keyboard_content))
 
 
-async def send_custom_rejection_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def send_custom_rejection_reason_or_append_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message.reply_to_message:
         return
     review_message = update.message.reply_to_message
@@ -231,8 +240,14 @@ async def send_custom_rejection_reason(update: Update, context: ContextTypes.DEF
         return
     submission_meta = pickle.loads(base64.urlsafe_b64decode(
         review_message.text_markdown_v2_urled.split('/')[-1][:-1]))
+    # if the submission is pending
+    if get_submission_status(submission_meta)[0] == SubmissionStatus.PENDING:
+        submission_meta['append'] += f"\n审核注：{update.message.text}"
+        await update.message.reply_text("✅ 已添加备注")
+        await review_message.edit_text(text=generate_submission_meta_string(submission_meta), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=review_message.reply_markup)
+        return
     # if the submission has not been rejected yet
-    if get_submission_status(submission_meta)[0] not in [SubmissionStatus.REJECTED_NO_REASON, SubmissionStatus.REJECTED]:
+    if get_submission_status(submission_meta)[0] == SubmissionStatus.APPROVED:
         return
     # if the reviewer has not rejected the submission
     if update.message.from_user.id not in submission_meta['reviewer'] or submission_meta['reviewer'][update.message.from_user.id][2] in [ReviewChoice.SFW, ReviewChoice.NSFW]:
