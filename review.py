@@ -117,7 +117,11 @@ async def approve_submission(update: Update, context: ContextTypes.DEFAULT_TYPE)
         inline_keyboard = InlineKeyboardMarkup(
             [[InlineKeyboardButton("跳到下一条", url=next_url)]])
         await skip_all.edit_text(text="⚠️ #NSFW 提前预警", reply_markup=inline_keyboard)
-    await review_message.edit_text(text=generate_submission_meta_string(submission_meta), parse_mode=ParseMode.MARKDOWN_V2)
+    # add inline keyboard to jump to this submission and its comments in the publish channel
+    inline_keyboard = InlineKeyboardMarkup(
+        [[InlineKeyboardButton("在频道中查看", url=sent_messages[0].link),
+          InlineKeyboardButton("查看评论区", url=f"{sent_messages[0].link}?comment=1")]])
+    await review_message.edit_text(text=generate_submission_meta_string(submission_meta), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=inline_keyboard)
 
 
 async def reject_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
