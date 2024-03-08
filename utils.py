@@ -1,5 +1,5 @@
 import os
-from telegram import InputMediaPhoto, InputMediaVideo, ReplyParameters
+from telegram import InputMediaPhoto, InputMediaVideo, InputMediaDocument, ReplyParameters
 from telegram.ext import ContextTypes
 
 # get args from environment virables
@@ -31,13 +31,13 @@ async def send_group(context: ContextTypes.DEFAULT_TYPE, chat_id, item_list, typ
         if len(portion) > 1:
             sent_messages.extend(await context.bot.send_media_group(chat_id=chat_id, media=portion, caption=text))
             continue
-        match type(portion[0]):
-            case "InputMediaPhoto":
-                sent_messages.append(await context.bot.send_photo(chat_id=chat_id, photo=portion[0].file_id, caption=text, has_spoiler=has_spoiler))
-            case "InputMediaVideo":
-                sent_messages.append(await context.bot.send_video(chat_id=chat_id, video=portion[0].file_id, caption=text, has_spoiler=has_spoiler))
-            case "InputMediaDocument":
-                sent_messages.append(await context.bot.send_document(chat_id=chat_id, document=portion[0].file_id, caption=text))
+        match portion[0]:
+            case InputMediaPhoto():
+                sent_messages.append(await context.bot.send_photo(chat_id=chat_id, photo=portion[0].media, caption=text, has_spoiler=has_spoiler))
+            case InputMediaVideo():
+                sent_messages.append(await context.bot.send_video(chat_id=chat_id, video=portion[0].media, caption=text, has_spoiler=has_spoiler))
+            case InputMediaDocument():
+                sent_messages.append(await context.bot.send_document(chat_id=chat_id, document=portion[0].media, caption=text))
 
     return sent_messages
 
