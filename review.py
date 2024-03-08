@@ -9,7 +9,7 @@ import base64
 
 '''
 submission_meta = {
-    "submitter": [submitter.id, submitter.username, submitter.full_name],
+    "submitter": [submitter.id, submitter.username, submitter.full_name, first_submission_message.id],
     "reviewer": {
         reviewer1.id: [reviewer1.username, reviewer1.full_name, option1],
         reviewer2.id: [reviewer2.username, reviewer2.full_name, option2],
@@ -19,7 +19,6 @@ submission_meta = {
     "media_type_list": [media1.type, media2.type, ...],
     "documents_id_list": [document1.id, document2.id, ...],
     "document_type_list": [document1.type, document2.type, ...],
-    "text": "text",
 }
 '''
 
