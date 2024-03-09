@@ -27,6 +27,6 @@ if __name__ == '__main__':
             append_message, pattern=f"^{ReviewChoice.APPEND}"),
         CallbackQueryHandler(reject_reason, pattern=f"^REASON"),
         MessageHandler(filters.REPLY & filters.Chat(chat_id=int(TG_REVIEWER_GROUP)) & (PrefixFilter("/append ") | PrefixFilter(f"@{TG_BOT_USERNAME} /append ")), append_message),
-        MessageHandler(filters.REPLY, send_custom_rejection_reason),
+        MessageHandler(filters.REPLY & filters.Chat(chat_id=int(TG_REVIEWER_GROUP)), send_custom_rejection_reason),
     ])
     application.run_polling()
