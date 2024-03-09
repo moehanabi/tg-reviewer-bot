@@ -63,8 +63,14 @@ async def reply_review_message(first_submission_message, submission_meta):
                 InlineKeyboardButton(
                     "↩️ 撤回我的投票", callback_data=f"{ReviewChoice.WITHDRAW}.{first_submission_message.message_id}")
             ],
-            [InlineKeyboardButton(
-                "✒️ 添加备注", switch_inline_query_current_chat="/append 请回复原消息并修改此处文字"),]
+            [
+                InlineKeyboardButton(
+                    "✒️ 添加备注", switch_inline_query_current_chat="/append 请回复原消息并修改此处文字"),
+            ],
+            [
+                InlineKeyboardButton(
+                    "💬 回复投稿人", switch_inline_query_current_chat="/comment 请回复原消息并修改此处文字"),
+            ]
         ]
     )
 
@@ -125,7 +131,8 @@ async def approve_submission(update: Update, context: ContextTypes.DEFAULT_TYPE)
     # add inline keyboard to jump to this submission and its comments in the publish channel
     inline_keyboard = InlineKeyboardMarkup(
         [[InlineKeyboardButton("在频道中查看", url=sent_messages[0].link),
-          InlineKeyboardButton("查看评论区", url=f"{sent_messages[0].link}?comment=1")]])
+          InlineKeyboardButton("查看评论区", url=f"{sent_messages[0].link}?comment=1")],
+         [InlineKeyboardButton("💬 回复投稿人", switch_inline_query_current_chat="/comment 请回复原消息并修改此处文字")]])
     await review_message.edit_text(text=generate_submission_meta_string(submission_meta), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=inline_keyboard)
 
 
@@ -154,7 +161,7 @@ async def reject_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
     inline_keyboard = None
     if TG_REJECTED_CHANNEL:
         inline_keyboard = InlineKeyboardMarkup(
-            [review_message.reply_markup.inline_keyboard[-1]])
+            [review_message.reply_markup.inline_keyboard[-2:]])
     await review_message.edit_text(text=generate_submission_meta_string(submission_meta), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=inline_keyboard)
     # send result to submitter
     await send_result_to_submitter(context, submission_meta['submitter'][0], submission_meta['submitter'][3], f"😢 很抱歉，投稿未通过审核。\n原因：{get_rejection_reason_text(submission_meta['reviewer'][query.from_user.id][2])}")
@@ -182,7 +189,8 @@ async def reject_submission(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if TG_REJECTED_CHANNEL:
             sent_message = await send_submission(context=context, chat_id=TG_REJECTED_CHANNEL, media_id_list=submission_meta['media_id_list'], media_type_list=submission_meta['media_type_list'], documents_id_list=submission_meta['documents_id_list'], document_type_list=submission_meta['document_type_list'], text=((origin_message.text or origin_message.caption) or '') + submission_meta['append'])
             inline_keyboard = InlineKeyboardMarkup(
-                [[InlineKeyboardButton("在拒稿频道中查看", url=sent_message[-1].link)]])
+                [[InlineKeyboardButton("在拒稿频道中查看", url=sent_message[-1].link)],
+                 [InlineKeyboardButton("💬 回复投稿人", switch_inline_query_current_chat="/comment 请回复原消息并修改此处文字")]])
         await review_message.edit_text(text=generate_submission_meta_string(submission_meta), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=inline_keyboard)
         # send result to submitter
         await send_result_to_submitter(context, submission_meta['submitter'][0], submission_meta['submitter'][3], f"😢 很抱歉，投稿未通过审核。\n原因：{get_rejection_reason_text(submission_meta['reviewer'][query.from_user.id][2])}")
@@ -221,8 +229,9 @@ async def reject_submission(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # send the submittion to rejected channel
     if TG_REJECTED_CHANNEL:
         sent_message = await send_submission(context=context, chat_id=TG_REJECTED_CHANNEL, media_id_list=submission_meta['media_id_list'], media_type_list=submission_meta['media_type_list'], documents_id_list=submission_meta['documents_id_list'], document_type_list=submission_meta['document_type_list'], text=((origin_message.text or origin_message.caption) or '') + submission_meta['append'])
-        inline_keyboard_content.append(
-            [InlineKeyboardButton("在拒稿频道中查看", url=sent_message[-1].link)])
+        inline_keyboard_content.extend(
+            [[InlineKeyboardButton("在拒稿频道中查看", url=sent_message[-1].link)],
+             [InlineKeyboardButton("💬 回复投稿人", switch_inline_query_current_chat="/comment 请回复原消息并修改此处文字")]])
     await review_message.edit_text(text=generate_submission_meta_string(submission_meta), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=InlineKeyboardMarkup(inline_keyboard_content))
 
 
@@ -241,6 +250,20 @@ async def append_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     submission_meta['append'] += f"\n审核注：{append_message}"
     await update.message.reply_text("✅ 已添加备注")
     await review_message.edit_text(text=generate_submission_meta_string(submission_meta), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=review_message.reply_markup)
+
+
+async def comment_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    comment_message = update.message.text.split('/comment ')[1]
+    if not update.message.reply_to_message:
+        return
+    review_message = update.message.reply_to_message
+    # if there is not a submission_meta in the review_message
+    if '\u200b' not in review_message.text:
+        return
+    submission_meta = pickle.loads(base64.urlsafe_b64decode(
+        review_message.text_markdown_v2_urled.split('/')[-1][:-1]))
+    await send_result_to_submitter(context, submission_meta['submitter'][0], submission_meta['submitter'][3], f"来自审核的消息：{comment_message}")
+    await update.message.reply_text("✅ 已发送")
 
 
 async def send_custom_rejection_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
