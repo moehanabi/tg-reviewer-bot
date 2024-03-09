@@ -69,6 +69,8 @@ async def reply_review_message(first_submission_message, submission_meta):
             [
                 InlineKeyboardButton(
                     "✒️ 添加备注", switch_inline_query_current_chat="/append 请回复原消息并修改此处文字"),
+                InlineKeyboardButton(
+                    "⬅️ 删除备注", switch_inline_query_current_chat="/remove_append 请回复原消息并修改此处文字为待删除备注的编号")
             ],
             [
                 InlineKeyboardButton(
@@ -269,6 +271,34 @@ async def append_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("✅ 已添加备注")
     await review_message.edit_text(text=generate_submission_meta_string(submission_meta), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=review_message.reply_markup)
 
+async def remove_append_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    append_message_num = update.message.text.split('/remove_append ')[1]
+    if not update.message.reply_to_message:
+        return
+    review_message = update.message.reply_to_message
+    # if there is not a submission_meta in the review_message
+    if '\u200b' not in review_message.text:
+        return
+    submission_meta = pickle.loads(base64.urlsafe_b64decode(
+        review_message.text_markdown_v2_urled.split('/')[-1][:-1]))
+    if get_submission_status(submission_meta)[0] != SubmissionStatus.PENDING:
+        await update.message.reply_text("😂 只有待审稿件才能删除备注")
+        return
+    reviewer_fullname = update.message.from_user.full_name
+    if reviewer_fullname not in submission_meta['append']:
+        await update.message.reply_text("😂 你没有添加备注")
+        return
+    try:
+        append_message_num = int(append_message_num)
+    except:
+        await update.message.reply_text("😂 请输入正确的备注序号")
+        return
+    if append_message_num < 1 or append_message_num > len(submission_meta['append'][reviewer_fullname]):
+        await update.message.reply_text("😂 请输入正确的备注序号")
+        return
+    submission_meta['append'][reviewer_fullname].pop(append_message_num - 1)
+    await update.message.reply_text("✅ 已删除备注")
+    await review_message.edit_text(text=generate_submission_meta_string(submission_meta), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=review_message.reply_markup)
 
 async def comment_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     comment_message = update.message.text.split('/comment ')[1]
