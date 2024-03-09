@@ -496,6 +496,12 @@ def generate_submission_meta_string(submission_meta):
                     option_sign = "🔴"
             reviewers_string += f"\n- {option_sign} 由 {reviewer_fullname} ({f'@{reviewer_username}, ' if reviewer_username else ''}{reviewer_id}) {option_text}"
 
+    # append_string
+    append_string = "审稿人备注："
+    for reviewer_fullname, append_list in submission_meta['append'].items():
+        append_string += f"\n - 由 {reviewer_fullname} 添加的备注："
+        append_string += ''.join(f"\n{i+1}. {message}" for i, message in enumerate(append_list))
+
     # status_string and status_tag
     status_string = ""
     status_tag = ""
@@ -529,6 +535,7 @@ def generate_submission_meta_string(submission_meta):
 
 {submitter_string}
 {reviewers_string}
+{append_string}
 当前状态：{status_string}
 
 {tags}'''), version=2)
