@@ -1,8 +1,8 @@
 import logging
 from telegram.ext import ApplicationBuilder, CallbackQueryHandler, MessageHandler, filters
 from submit import submission_handler
-from utils import TG_TOKEN
-from review import approve_submission, reject_submission, query_decision, withdraw_decision, ReviewChoice, reject_reason, send_custom_rejection_reason_or_append_message, append_message
+from utils import TG_TOKEN, TG_REVIEWER_GROUP, TG_BOT_USERNAME, PrefixFilter
+from review import approve_submission, reject_submission, query_decision, withdraw_decision, ReviewChoice, reject_reason, append_message, send_custom_rejection_reason, append_message
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -26,7 +26,7 @@ if __name__ == '__main__':
         CallbackQueryHandler(
             append_message, pattern=f"^{ReviewChoice.APPEND}"),
         CallbackQueryHandler(reject_reason, pattern=f"^REASON"),
-        MessageHandler(
-            filters.REPLY, send_custom_rejection_reason_or_append_message),
+        MessageHandler(filters.REPLY & filters.Chat(chat_id=int(TG_REVIEWER_GROUP)) & (PrefixFilter("/append ") | PrefixFilter(f"@{TG_BOT_USERNAME} /append ")), append_message),
+        MessageHandler(filters.REPLY, send_custom_rejection_reason),
     ])
     application.run_polling()
