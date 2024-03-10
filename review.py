@@ -271,6 +271,7 @@ async def append_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("✅ 已添加备注")
     await review_message.edit_text(text=generate_submission_meta_string(submission_meta), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=review_message.reply_markup)
 
+
 async def remove_append_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     append_message_num = update.message.text.split('/remove_append ')[1]
     if not update.message.reply_to_message:
@@ -297,8 +298,11 @@ async def remove_append_message(update: Update, context: ContextTypes.DEFAULT_TY
         await update.message.reply_text("😂 请输入正确的备注序号")
         return
     submission_meta['append'][reviewer_fullname].pop(append_message_num - 1)
+    if not submission_meta['append'][reviewer_fullname]:
+        del submission_meta['append'][reviewer_fullname]
     await update.message.reply_text("✅ 已删除备注")
     await review_message.edit_text(text=generate_submission_meta_string(submission_meta), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=review_message.reply_markup)
+
 
 async def comment_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     comment_message = update.message.text.split('/comment ')[1]
@@ -530,7 +534,8 @@ def generate_submission_meta_string(submission_meta):
     append_string = "审稿人备注："
     for reviewer_fullname, append_list in submission_meta['append'].items():
         append_string += f"\n - 由 {reviewer_fullname} 添加的备注："
-        append_string += ''.join(f"\n{i+1}. {message}" for i, message in enumerate(append_list))
+        append_string += ''.join(f"\n{i+1}. {message}" for i,
+                                 message in enumerate(append_list))
 
     # status_string and status_tag
     status_string = ""
