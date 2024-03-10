@@ -68,7 +68,7 @@ async def reply_review_message(first_submission_message, submission_meta):
             ],
             [
                 InlineKeyboardButton(
-                    "✒️ 添加备注", switch_inline_query_current_chat="/append 请回复原消息并修改此处文字"),
+                    "📝 添加备注", switch_inline_query_current_chat="/append 请回复原消息并修改此处文字"),
                 InlineKeyboardButton(
                     "⬅️ 删除备注", switch_inline_query_current_chat="/remove_append 请回复原消息并修改此处文字为待删除备注的编号")
             ],
