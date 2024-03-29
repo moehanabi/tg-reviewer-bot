@@ -173,7 +173,10 @@ async def reject_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
             review_message.reply_markup.inline_keyboard[-2:])
     await review_message.edit_text(text=generate_submission_meta_string(submission_meta), parse_mode=ParseMode.MARKDOWN_V2, reply_markup=inline_keyboard)
     # send result to submitter
-    await send_result_to_submitter(context, submission_meta['submitter'][0], submission_meta['submitter'][3], f"😢 很抱歉，投稿未通过审核。\n原因：{get_rejection_reason_text(submission_meta['reviewer'][query.from_user.id][2])}")
+    reason = f"\n原因：{get_rejection_reason_text(submission_meta['reviewer'][query.from_user.id][2])}"
+    if reason == "\n原因：暂无理由":
+        reason = ""
+    await send_result_to_submitter(context, submission_meta['submitter'][0], submission_meta['submitter'][3], f"😢 很抱歉，投稿未通过审核。{reason}")
 
 
 async def reject_submission(update: Update, context: ContextTypes.DEFAULT_TYPE):
