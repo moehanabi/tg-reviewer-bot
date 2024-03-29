@@ -86,9 +86,9 @@ async def collect_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [
             InlineKeyboardButton(
-                "匿名投稿", callback_data=f"anonymous"),
-            InlineKeyboardButton(
                 "实名投稿", callback_data=f"realname"),
+            InlineKeyboardButton(
+                "匿名投稿", callback_data=f"anonymous"),
         ],
         [
             InlineKeyboardButton("取消投稿", callback_data="cancel")
