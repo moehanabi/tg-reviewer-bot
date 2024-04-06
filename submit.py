@@ -15,7 +15,7 @@ from telegram.ext import (
     filters,
 )
 
-from review import reply_review_message
+from review_utils import reply_review_message
 from utils import TG_REVIEWER_GROUP, send_submission
 
 # set const as the state of one user

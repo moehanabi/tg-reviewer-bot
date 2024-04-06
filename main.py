@@ -8,16 +8,18 @@ from telegram.ext import (
 )
 
 from review import (
+    approve_submission,
+    query_decision,
+    reject_submission,
+    withdraw_decision,
+)
+from review_utils import (
     ReviewChoice,
     append_message,
-    approve_submission,
     comment_message,
-    query_decision,
     reject_reason,
-    reject_submission,
     remove_append_message,
     send_custom_rejection_reason,
-    withdraw_decision,
 )
 from submit import submission_handler
 from utils import TG_BOT_USERNAME, TG_REVIEWER_GROUP, TG_TOKEN, PrefixFilter
