@@ -847,7 +847,7 @@ def generate_submission_meta_string(submission_meta):
             status_string = "待审稿"
             status_tag = "#PENDING"
         case SubmissionStatus.APPROVED:
-            status_string = "以 SFW 通过" if is_nsfw else "以 NSFW 通过"
+            status_string = "以 NSFW 通过" if is_nsfw else "以 SFW 通过"
             status_tag = "#APPROVED #SFW" if not is_nsfw else "#APPROVED #NSFW"
         case SubmissionStatus.REJECTED:
             status_string = f"因为 {rejection_reason} 被拒稿"
