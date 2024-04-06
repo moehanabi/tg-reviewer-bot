@@ -1,3 +1,4 @@
+from review import reply_review_message
 from telegram import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
@@ -14,9 +15,9 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
+from utils import send_submission
 
-from review import reply_review_message
-from utils import TG_REVIEWER_GROUP, send_submission
+from src.tg_reviewer_bot.const import TG_REVIEWER_GROUP
 
 # set const as the state of one user
 COLLECTING = range(1)

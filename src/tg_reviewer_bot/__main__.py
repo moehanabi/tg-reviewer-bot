@@ -1,12 +1,5 @@
 import logging
 
-from telegram.ext import (
-    ApplicationBuilder,
-    CallbackQueryHandler,
-    MessageHandler,
-    filters,
-)
-
 from review import (
     ReviewChoice,
     append_message,
@@ -20,7 +13,19 @@ from review import (
     withdraw_decision,
 )
 from submit import submission_handler
-from utils import TG_BOT_USERNAME, TG_REVIEWER_GROUP, TG_TOKEN, PrefixFilter
+from telegram.ext import (
+    ApplicationBuilder,
+    CallbackQueryHandler,
+    MessageHandler,
+    filters,
+)
+from utils import PrefixFilter
+
+from src.tg_reviewer_bot.const import (
+    TG_BOT_USERNAME,
+    TG_REVIEWER_GROUP,
+    TG_TOKEN,
+)
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
