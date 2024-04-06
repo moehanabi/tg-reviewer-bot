@@ -6,15 +6,15 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from telegram.helpers import escape_markdown
-from utils import send_result_to_submitter, send_submission
 
-from src.tg_reviewer_bot.const import (
+from const import (
     APPROVE_NUMBER_REQUIRED,
     REJECT_NUMBER_REQUIRED,
     REJECTION_REASON,
     TG_PUBLISH_CHANNEL,
     TG_REJECTED_CHANNEL,
 )
+from utils import send_result_to_submitter, send_submission
 
 """
 submission_meta = {

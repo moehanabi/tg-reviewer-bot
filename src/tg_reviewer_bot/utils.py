@@ -7,17 +7,6 @@ from telegram import (
 from telegram.ext import ContextTypes
 from telegram.ext.filters import MessageFilter
 
-from .const import (
-    APPROVE_NUMBER_REQUIRED,
-    REJECT_NUMBER_REQUIRED,
-    REJECTION_REASON,
-    TG_BOT_USERNAME,
-    TG_PUBLISH_CHANNEL,
-    TG_REJECTED_CHANNEL,
-    TG_REVIEWER_GROUP,
-    TG_TOKEN,
-)
-
 
 class PrefixFilter(MessageFilter):
     prefix = "/append"

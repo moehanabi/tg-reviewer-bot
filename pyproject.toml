@@ -2,7 +2,7 @@
 name = "tg-reviewer-bot"
 version = "0.1.0"
 description = "每日沙雕墙"
-authors = ["moehanabi <moehanabichan@gmail.com>"]
+authors = ["moehanabi <moehanabichan@gmail.com>", "快乐的老鼠宝宝 <laoshubaby@protonmail.com>"]
 license = "Proprietary"
 readme = "README.md"
 repository = "https://github.com/moehanabi/tg-reviewer-bot"
