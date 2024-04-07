@@ -132,10 +132,12 @@ async def reject_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # if the reviewer has rejected the submission
     match query.data:
         case "REASON.NONE":
+            # NONE's index is the length of REJECTION_REASON (means the last number)
             submission_meta["reviewer"][query.from_user.id][2] = len(
                 REJECTION_REASON
             )
         case _:
+            # every rejection reason has an index, see REJECTION_REASON
             submission_meta["reviewer"][query.from_user.id][2] = int(
                 query.data.split(".")[1]
             )
