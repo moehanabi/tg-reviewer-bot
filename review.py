@@ -273,7 +273,10 @@ async def reject_submission(
             )
     inline_keyboard_content.append(
         [
-            InlineKeyboardButton("自定义理由", callback_data="REASON.OTHER"),
+            InlineKeyboardButton(
+                "自定义理由",
+                switch_inline_query_current_chat="/reject 请回复原消息并修改此处文字",
+            ),
             InlineKeyboardButton("暂无理由", callback_data="REASON.NONE"),
         ]
     )

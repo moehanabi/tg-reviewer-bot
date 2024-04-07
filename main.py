@@ -92,7 +92,12 @@ if __name__ == "__main__":
                 comment_message,
             ),
             MessageHandler(
-                filters.REPLY & filters.Chat(chat_id=int(TG_REVIEWER_GROUP)),
+                filters.REPLY
+                & filters.Chat(chat_id=int(TG_REVIEWER_GROUP))
+                & (
+                    PrefixFilter("/reject ")
+                    | PrefixFilter(f"@{TG_BOT_USERNAME} /reject ")
+                ),
                 send_custom_rejection_reason,
             ),
         ]
