@@ -544,11 +544,7 @@ def generate_submission_meta_string(submission_meta):
             tags += f" #USER_{reviewer_id} #REVIEWER_{reviewer_id}"
     tags += f" {status_tag}"
 
-    submission_meta_text = (
-        f"[\u200b](http://t.me/{base64.urlsafe_b64encode(pickle.dumps(submission_meta)).decode()})"
-        if status != SubmissionStatus.APPROVED
-        else ""
-    )
+    submission_meta_text = f"[\u200b](http://t.me/{base64.urlsafe_b64encode(pickle.dumps(submission_meta)).decode()})"
     visible_content = escape_markdown(
         dedent(
             f"""\
