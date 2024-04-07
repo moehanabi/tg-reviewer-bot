@@ -60,9 +60,6 @@ if __name__ == "__main__":
             CallbackQueryHandler(
                 withdraw_decision, pattern=f"^{ReviewChoice.WITHDRAW}"
             ),
-            CallbackQueryHandler(
-                append_message, pattern=f"^{ReviewChoice.APPEND}"
-            ),
             CallbackQueryHandler(reject_reason, pattern=f"^REASON"),
             MessageHandler(
                 filters.REPLY

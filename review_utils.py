@@ -42,7 +42,6 @@ class ReviewChoice:
     REJECT_DUPLICATE = "3"
     QUERY = "4"
     WITHDRAW = "5"
-    APPEND = "6"
 
 
 class SubmissionStatus:
