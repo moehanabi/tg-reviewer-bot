@@ -19,6 +19,7 @@ from review_utils import (
     comment_message,
     reject_reason,
     remove_append_message,
+    retract_approved_submission,
     send_custom_rejection_reason,
 )
 from submit import submission_handler
@@ -59,6 +60,10 @@ if __name__ == "__main__":
             ),
             CallbackQueryHandler(
                 withdraw_decision, pattern=f"^{ReviewChoice.WITHDRAW}"
+            ),
+            CallbackQueryHandler(
+                retract_approved_submission,
+                pattern=f"^{ReviewChoice.APPROVED_RETRACT}",
             ),
             CallbackQueryHandler(reject_reason, pattern=f"^REASON"),
             MessageHandler(

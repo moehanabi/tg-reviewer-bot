@@ -11,7 +11,9 @@ from utils import (
     APPROVE_NUMBER_REQUIRED,
     REJECT_NUMBER_REQUIRED,
     REJECTION_REASON,
+    TG_PUBLISH_CHANNEL,
     TG_REJECTED_CHANNEL,
+    TG_RETRACT_NOTIFY,
     send_result_to_submitter,
 )
 
@@ -42,6 +44,7 @@ class ReviewChoice:
     REJECT_DUPLICATE = "3"
     QUERY = "4"
     WITHDRAW = "5"
+    APPROVED_RETRACT = "6"
 
 
 class SubmissionStatus:
@@ -353,6 +356,53 @@ def remove_decision(submission_meta, reviewer):
         return submission_meta, True
     else:
         return submission_meta, False
+
+
+async def retract_approved_submission(
+    update: Update, context: ContextTypes.DEFAULT_TYPE
+):
+    query = update.callback_query
+    review_message = update.effective_message
+    submission_meta = pickle.loads(
+        base64.urlsafe_b64decode(
+            review_message.text_markdown_v2_urled.split("/")[-1][:-1]
+        )
+    )
+    sent_messages = query.data.split(".", 1)[-1].split(",")
+    if query.from_user.id not in submission_meta["reviewer"]:
+        await query.answer("😂 你没有投票")
+        return
+    if submission_meta["reviewer"][query.from_user.id][2] not in [
+        ReviewChoice.SFW,
+        ReviewChoice.NSFW,
+    ]:
+        await query.answer("😂 你没有通过票")
+        return
+    try:
+        for message in sent_messages:
+            await context.bot.deleteMessage(
+                chat_id=TG_PUBLISH_CHANNEL, message_id=message
+            )
+        await query.answer("↩️ 已撤回")
+        submission_meta["reviewer"][query.from_user.id][2] = "通过后撤回"
+        inline_keyboard = None
+        await review_message.edit_text(
+            text=generate_submission_meta_string(submission_meta),
+            parse_mode=ParseMode.MARKDOWN_V2,
+            reply_markup=inline_keyboard,
+        )
+        # send result to submitter
+        if TG_RETRACT_NOTIFY:
+            await send_result_to_submitter(
+                context,
+                submission_meta["submitter"][0],
+                submission_meta["submitter"][3],
+                "😢 很抱歉，投稿被撤回。",
+            )
+    except:
+        await query.answer(
+            "😢 无法撤回，可能是机器人权限不足或投稿通过已超过 48 小时"
+        )
 
 
 def get_rejection_reason_text(option):

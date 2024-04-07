@@ -125,6 +125,10 @@ async def approve_submission(
             text="⚠️ #NSFW 提前预警", reply_markup=inline_keyboard
         )
     # add inline keyboard to jump to this submission and its comments in the publish channel
+    sent_message_ids = [message.message_id for message in sent_messages]
+    if skip_all is not None:
+        sent_message_ids.append(skip_all.message_id)
+    sent_message_ids = ",".join(str(i) for i in sent_message_ids)
     inline_keyboard = InlineKeyboardMarkup(
         [
             [
@@ -139,7 +143,11 @@ async def approve_submission(
                 InlineKeyboardButton(
                     "💬 回复投稿人",
                     switch_inline_query_current_chat="/comment 请回复原消息并修改此处文字",
-                )
+                ),
+                InlineKeyboardButton(
+                    "↩️ 撤稿",
+                    callback_data=f"{ReviewChoice.APPROVED_RETRACT}.{sent_message_ids}",
+                ),
             ],
         ]
     )
