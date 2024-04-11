@@ -24,7 +24,7 @@ try:
     REJECT_NUMBER_REQUIRED = int(os.getenv("TG_REJECT_NUMBER_REQUIRED", 2))
 except (TypeError, ValueError):
     REJECT_NUMBER_REQUIRED = 2
-REJECTION_REASON = os.environ.get("TG_REJECTION_REASON").split(":")
+REJECTION_REASON = os.environ.get("TG_REJECTION_REASON", "").split(":")
 
 
 class PrefixFilter(MessageFilter):
