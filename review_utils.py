@@ -554,6 +554,8 @@ def generate_submission_meta_string(submission_meta):
         append_string += "".join(
             f"\n{i+1}. {message}" for i, message in enumerate(append_list)
         )
+    if append_string == "审稿人备注：":
+        append_string = ""
 
     # status_string and status_tag
     status_string = ""
