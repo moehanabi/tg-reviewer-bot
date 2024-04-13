@@ -25,6 +25,7 @@ try:
 except (TypeError, ValueError):
     REJECT_NUMBER_REQUIRED = 2
 REJECTION_REASON = os.environ.get("TG_REJECTION_REASON", "").split(":")
+TG_DB_URL = os.environ.get("TG_DB_URL", "")
 
 
 class PrefixFilter(MessageFilter):
