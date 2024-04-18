@@ -10,7 +10,7 @@ from telegram.ext import (
 
 from db_op import Banned_user
 from review_utils import reply_review_message
-from utils import TG_REVIEWER_GROUP, send_submission
+from utils import TG_BANNED_NOTIFY, TG_REVIEWER_GROUP, send_submission
 
 # set const as the state of one user
 COLLECTING = range(1)
@@ -129,7 +129,8 @@ async def handle_new_submission(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ):
     if Banned_user.is_banned(update.effective_user.id):
-        await update.message.reply_text("你已被禁止投稿。")
+        if TG_BANNED_NOTIFY:
+            await update.message.reply_text("你已被禁止投稿。")
         return ConversationHandler.END
 
     await update.message.reply_text(

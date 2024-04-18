@@ -16,6 +16,7 @@ TG_PUBLISH_CHANNEL = os.environ.get("TG_PUBLISH_CHANNEL")
 TG_REJECTED_CHANNEL = os.environ.get("TG_REJECTED_CHANNEL")
 TG_BOT_USERNAME = os.environ.get("TG_BOT_USERNAME")
 TG_RETRACT_NOTIFY = os.getenv("TG_RETRACT_NOTIFY", "True") == "True"
+TG_BANNED_NOTIFY = os.getenv("TG_BANNED_NOTIFY", "True") == "True"
 try:
     APPROVE_NUMBER_REQUIRED = int(os.getenv("TG_APPROVE_NUMBER_REQUIRED", 2))
 except (TypeError, ValueError):
