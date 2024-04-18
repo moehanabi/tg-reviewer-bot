@@ -3,10 +3,12 @@ import logging
 from telegram.ext import (
     ApplicationBuilder,
     CallbackQueryHandler,
+    CommandHandler,
     MessageHandler,
     filters,
 )
 
+from ban import ban_user, list_banned_users, unban_user
 from review import (
     approve_submission,
     query_decision,
@@ -101,6 +103,29 @@ if __name__ == "__main__":
                     | PrefixFilter(f"@{TG_BOT_USERNAME} /reject ")
                 ),
                 send_custom_rejection_reason,
+            ),
+            MessageHandler(
+                filters.Chat(chat_id=int(TG_REVIEWER_GROUP))
+                & (
+                    PrefixFilter("/ban ")
+                    | PrefixFilter(f"@{TG_BOT_USERNAME} /ban ")
+                )
+                & ~filters.UpdateType.EDITED_MESSAGE,
+                ban_user,
+            ),
+            MessageHandler(
+                filters.Chat(chat_id=int(TG_REVIEWER_GROUP))
+                & (
+                    PrefixFilter("/unban ")
+                    | PrefixFilter(f"@{TG_BOT_USERNAME} /unban ")
+                )
+                & ~filters.UpdateType.EDITED_MESSAGE,
+                unban_user,
+            ),
+            CommandHandler(
+                "listban",
+                list_banned_users,
+                filters=~filters.UpdateType.EDITED_MESSAGE,
             ),
         ]
     )
