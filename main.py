@@ -104,23 +104,15 @@ if __name__ == "__main__":
                 ),
                 send_custom_rejection_reason,
             ),
-            MessageHandler(
-                filters.Chat(chat_id=int(TG_REVIEWER_GROUP))
-                & (
-                    PrefixFilter("/ban ")
-                    | PrefixFilter(f"@{TG_BOT_USERNAME} /ban ")
-                )
-                & ~filters.UpdateType.EDITED_MESSAGE,
+            CommandHandler(
+                "ban",
                 ban_user,
+                filters=~filters.UpdateType.EDITED_MESSAGE,
             ),
-            MessageHandler(
-                filters.Chat(chat_id=int(TG_REVIEWER_GROUP))
-                & (
-                    PrefixFilter("/unban ")
-                    | PrefixFilter(f"@{TG_BOT_USERNAME} /unban ")
-                )
-                & ~filters.UpdateType.EDITED_MESSAGE,
+            CommandHandler(
+                "unban",
                 unban_user,
+                filters=~filters.UpdateType.EDITED_MESSAGE,
             ),
             CommandHandler(
                 "listban",

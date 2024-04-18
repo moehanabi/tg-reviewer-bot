@@ -168,3 +168,12 @@ async def send_result_to_submitter(
         )
     except:
         pass
+
+
+async def get_name_from_uid(context, user_id):
+    try:
+        user = await context.bot.get_chat(user_id)
+        return user.username, user.full_name
+    except Exception as e:
+        print(e)
+        return "", ""

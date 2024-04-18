@@ -70,18 +70,30 @@ class Submitter(Base):
 class Banned_user(Base):
     __tablename__ = "banned_users"
     user_id: Mapped[id_pk]
+    user_name: Mapped[str] = mapped_column(String(50))
+    user_fullname: Mapped[str] = mapped_column(String(50))
+    banned_reason: Mapped[str] = mapped_column(String(50), nullable=True)
     banned_date: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
     banned_by: Mapped[id]
 
     def __repr__(self):
-        return f"Banned_user(User ID: {self.user_id}, Banned Date: {self.banned_date}, Banned By: {self.banned_by})"
+        return f"Banned_user({self.user_fullname} ({f'@{self.user_name}, ' if self.user_name else ''}{self.user_id}), Banned Date: {self.banned_date}, Banned By: {self.banned_by}), Reason: {self.banned_reason})"
 
     @staticmethod
-    def ban_user(user_id, banned_by):
+    def ban_user(
+        user_id, user_name, user_fullname, banned_by, banned_reason=None
+    ):
         try:
-            db.insert(Banned_user, user_id=user_id, banned_by=banned_by)
+            db.insert(
+                Banned_user,
+                user_id=user_id,
+                user_name=user_name,
+                user_fullname=user_fullname,
+                banned_by=banned_by,
+                banned_reason=banned_reason,
+            )
         except IntegrityError as e:
             print(f"IntegrityError: {e}")
 
