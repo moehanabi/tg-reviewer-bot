@@ -126,9 +126,12 @@ class Reviewer(Base):
     reject_count: Mapped[int]
     approve_but_rejected_count: Mapped[int]
     reject_but_approved_count: Mapped[int]
+    last_time: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
 
     def __repr__(self):
-        return f"Reviewer(User ID: {self.user_id}, Approve Count: {self.approve_count}, Reject Count: {self.reject_count}, Approve but Rejected Count: {self.approve_but_rejected_count}, Reject but Approved Count: {self.reject_but_approved_count})"
+        return f"Reviewer(User ID: {self.user_id}, Approve Count: {self.approve_count}, Reject Count: {self.reject_count}, Approve but Rejected Count: {self.approve_but_rejected_count}, Reject but Approved Count: {self.reject_but_approved_count}, Last Date: {self.last_time})"
 
     @staticmethod
     def count_increase(user_id, column_name, num=1):

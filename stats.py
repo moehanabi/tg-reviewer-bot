@@ -48,7 +48,9 @@ async def reviewer_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
         拒稿但稿件通过数量: {reviewer_info.reject_but_approved_count}
         
         通过但稿件被拒数量 / 通过数量: {reviewer_info.approve_but_rejected_count / reviewer_info.approve_count * 100 if reviewer_info.approve_count else 0.0:.2f}%
-        拒稿但稿件通过数量 / 拒稿数量: {reviewer_info.reject_but_approved_count / reviewer_info.reject_count * 100 if reviewer_info.reject_count else 0.0:.2f}%"""
+        拒稿但稿件通过数量 / 拒稿数量: {reviewer_info.reject_but_approved_count / reviewer_info.reject_count * 100 if reviewer_info.reject_count else 0.0:.2f}%
+        
+        最后一次审核时间: {reviewer_info.last_time}"""
         ),
         version=2,
     )
