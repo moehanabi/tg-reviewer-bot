@@ -8,7 +8,7 @@ from telegram.ext import (
     filters,
 )
 
-from db_op import Banned_user
+from db_op import Banned_user, Submitter
 from review_utils import reply_review_message
 from utils import TG_BANNED_NOTIFY, TG_REVIEWER_GROUP, send_submission
 
@@ -62,6 +62,7 @@ async def confirm_submission(
         await query.edit_message_text(text="投稿成功")
 
     del message_groups[user.id]
+    Submitter.count_increase(user.id, "submission_count")
     return ConversationHandler.END
 
 

@@ -7,6 +7,7 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from telegram.helpers import escape_markdown
 
+from db_op import Submitter
 from utils import (
     APPROVE_NUMBER_REQUIRED,
     REJECT_NUMBER_REQUIRED,
@@ -399,6 +400,13 @@ async def retract_approved_submission(
                 submission_meta["submitter"][3],
                 "😢 很抱歉，投稿被撤回。",
             )
+        # modify stats data
+        Submitter.count_increase(
+            submission_meta["submitter"][0], "approved_count", -1
+        )
+        Submitter.count_increase(
+            submission_meta["submitter"][0], "rejected_count"
+        )
     except:
         await query.answer(
             "😢 无法撤回，可能是机器人权限不足或投稿通过已超过 48 小时"

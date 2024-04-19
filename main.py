@@ -26,6 +26,7 @@ from review_utils import (
 )
 from submit import submission_handler
 from utils import TG_BOT_USERNAME, TG_REVIEWER_GROUP, TG_TOKEN, PrefixFilter
+from stats import submitter_stats
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -117,6 +118,11 @@ if __name__ == "__main__":
             CommandHandler(
                 "listban",
                 list_banned_users,
+                filters=~filters.UpdateType.EDITED_MESSAGE,
+            ),
+            CommandHandler(
+                "stats",
+                submitter_stats,
                 filters=~filters.UpdateType.EDITED_MESSAGE,
             ),
         ]

@@ -35,7 +35,7 @@ class Submitter(Base):
         return f"Submitter(User ID: {self.user_id}, Submission Count: {self.submission_count}, Approved Count: {self.approved_count}, Rejected Count: {self.rejected_count})"
 
     @staticmethod
-    def count_increase(user_id, column_name):
+    def count_increase(user_id, column_name, num=1):
         # check submitter exist or not first
         if not db.select(Submitter, Submitter.user_id == user_id):
             db.insert(
@@ -51,7 +51,7 @@ class Submitter(Base):
         db.update(
             Submitter,
             Submitter.user_id == user_id,
-            **{column_name: current_count + 1},
+            **{column_name: current_count + num},
         )
 
     @staticmethod
