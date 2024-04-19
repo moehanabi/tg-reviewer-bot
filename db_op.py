@@ -131,7 +131,7 @@ class Reviewer(Base):
         return f"Reviewer(User ID: {self.user_id}, Approve Count: {self.approve_count}, Reject Count: {self.reject_count}, Approve but Rejected Count: {self.approve_but_rejected_count}, Reject but Approved Count: {self.reject_but_approved_count})"
 
     @staticmethod
-    def count_increase(user_id, column_name):
+    def count_increase(user_id, column_name, num=1):
         # check reviewer exist or not first
         if not db.select(Reviewer, Reviewer.user_id == user_id):
             db.insert(
@@ -148,7 +148,7 @@ class Reviewer(Base):
         db.update(
             Reviewer,
             Reviewer.user_id == user_id,
-            **{column_name: current_count + 1},
+            **{column_name: current_count + num},
         )
 
     @staticmethod

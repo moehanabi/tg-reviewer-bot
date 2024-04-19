@@ -7,7 +7,7 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from telegram.helpers import escape_markdown
 
-from db_op import Submitter
+from db_op import Reviewer, Submitter
 from utils import (
     APPROVE_NUMBER_REQUIRED,
     REJECT_NUMBER_REQUIRED,
@@ -353,6 +353,14 @@ def get_decision(submission_meta, reviewer):
 
 def remove_decision(submission_meta, reviewer):
     if reviewer in submission_meta["reviewer"]:
+        # decrease reviewer count
+        if submission_meta["reviewer"][reviewer][2] in [
+            ReviewChoice.SFW,
+            ReviewChoice.NSFW,
+        ]:
+            Reviewer.count_increase(reviewer, "approve_count", -1)
+        else:
+            Reviewer.count_increase(reviewer, "reject_count", -1)
         del submission_meta["reviewer"][reviewer]
         return submission_meta, True
     else:
