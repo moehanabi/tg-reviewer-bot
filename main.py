@@ -108,17 +108,20 @@ if __name__ == "__main__":
             CommandHandler(
                 "ban",
                 ban_user,
-                filters=~filters.UpdateType.EDITED_MESSAGE,
+                filters=~filters.UpdateType.EDITED_MESSAGE
+                & filters.Chat(chat_id=int(TG_REVIEWER_GROUP)),
             ),
             CommandHandler(
                 "unban",
                 unban_user,
-                filters=~filters.UpdateType.EDITED_MESSAGE,
+                filters=~filters.UpdateType.EDITED_MESSAGE
+                & filters.Chat(chat_id=int(TG_REVIEWER_GROUP)),
             ),
             CommandHandler(
                 "listban",
                 list_banned_users,
-                filters=~filters.UpdateType.EDITED_MESSAGE,
+                filters=~filters.UpdateType.EDITED_MESSAGE
+                & filters.Chat(chat_id=int(TG_REVIEWER_GROUP)),
             ),
             CommandHandler(
                 "stats",
