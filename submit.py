@@ -80,10 +80,10 @@ async def collect_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     submission["last_confirm_button"] = None
 
     # add new message to this user's message_groups dict
-    if message.text:
-        submission["text"] += message.text + "\n"
-    if message.caption:
-        submission["text"] += message.caption + "\n"
+    if message.text_markdown_v2_urled:
+        submission["text"] += message.text_markdown_v2_urled + "\n"
+    if message.caption_markdown_v2_urled:
+        submission["text"] += message.caption_markdown_v2_urled + "\n"
     if message.photo:
         submission["media_id_list"].append(message.photo[-1].file_id)
         submission["media_type_list"].append("photo")

@@ -121,7 +121,7 @@ async def approve_submission(
         media_type_list=submission_meta["media_type_list"],
         documents_id_list=submission_meta["documents_id_list"],
         document_type_list=submission_meta["document_type_list"],
-        text=((origin_message.text or origin_message.caption) or "")
+        text=((origin_message.text_markdown_v2_urled or origin_message.caption_markdown_v2_urled) or "")
         + "\n"
         + append_messages_string,
         has_spoiler=has_spoiler,
@@ -215,7 +215,7 @@ async def reject_submission(
                 media_type_list=submission_meta["media_type_list"],
                 documents_id_list=submission_meta["documents_id_list"],
                 document_type_list=submission_meta["document_type_list"],
-                text=((origin_message.text or origin_message.caption) or "")
+                text=((origin_message.text_markdown_v2_urled or origin_message.caption_markdown_v2_urled) or "")
                 + "\n"
                 + append_messages_string,
             )
@@ -334,7 +334,7 @@ async def reject_submission(
             media_type_list=submission_meta["media_type_list"],
             documents_id_list=submission_meta["documents_id_list"],
             document_type_list=submission_meta["document_type_list"],
-            text=((origin_message.text or origin_message.caption) or "")
+            text=((origin_message.text_markdown_v2_urled or origin_message.caption_markdown_v2_urled) or "")
             + "\n"
             + append_messages_string,
         )

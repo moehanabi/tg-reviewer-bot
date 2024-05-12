@@ -6,6 +6,7 @@ from telegram import (
     InputMediaVideo,
     ReplyParameters,
 )
+from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from telegram.ext.filters import MessageFilter
 
@@ -120,7 +121,11 @@ async def send_submission(
     # no media or documents, just send text
     if not media_id_list and not documents_id_list:
         sent_messages.append(
-            await context.bot.send_message(chat_id=chat_id, text=text)
+            await context.bot.send_message(
+                chat_id=chat_id,
+                text=text,
+                parse_mode=ParseMode.MARKDOWN_V2,
+            )
         )
         return sent_messages
 
