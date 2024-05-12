@@ -241,12 +241,12 @@ async def remove_append_message(
 
 
 async def comment_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    comment_message = update.message.text.split("/comment ")[1]
+    comment_message = update.message.text_markdown_v2_urled.split("/comment ")[1]
     if not update.message.reply_to_message:
         return
     review_message = update.message.reply_to_message
     # if there is not a submission_meta in the review_message
-    if "\u200b" not in review_message.text:
+    if "\u200b" not in review_message.text_markdown_v2_urled:
         return
     submission_meta = pickle.loads(
         base64.urlsafe_b64decode(
@@ -265,12 +265,12 @@ async def comment_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def send_custom_rejection_reason(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ):
-    reject_msg = update.message.text.split("/reject ")[1]
+    reject_msg = update.message.text_markdown_v2_urled.split("/reject ")[1]
     if not update.message.reply_to_message:
         return
     review_message = update.message.reply_to_message
     # if there is not a submission_meta in the review_message
-    if "\u200b" not in review_message.text:
+    if "\u200b" not in review_message.text_markdown_v2_urled:
         return
     submission_meta = pickle.loads(
         base64.urlsafe_b64decode(

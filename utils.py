@@ -170,6 +170,7 @@ async def send_result_to_submitter(
                 submit_message_id, allow_sending_without_reply=True
             ),
             reply_markup=inline_keyboard_markup,
+            parse_mode=ParseMode.MARKDOWN_V2,
         )
     except:
         pass
