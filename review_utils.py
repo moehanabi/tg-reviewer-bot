@@ -168,12 +168,12 @@ async def reject_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def append_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    append_message = update.message.text.split("/append ")[1]
+    append_message = update.message.text_markdown_v2_urled.split("/append ")[1]
     if not update.message.reply_to_message:
         return
     review_message = update.message.reply_to_message
     # if there is not a submission_meta in the review_message
-    if "\u200b" not in review_message.text:
+    if "\u200b" not in review_message.text_markdown_v2_urled:
         return
     submission_meta = pickle.loads(
         base64.urlsafe_b64decode(
