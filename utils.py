@@ -71,7 +71,10 @@ async def send_group(
         if len(portion) > 1:
             sent_messages.extend(
                 await context.bot.send_media_group(
-                    chat_id=chat_id, media=portion, caption=text
+                    chat_id=chat_id,
+                    media=portion,
+                    caption=text,
+                    parse_mode=ParseMode.MARKDOWN_V2,
                 )
             )
             continue
@@ -83,6 +86,7 @@ async def send_group(
                         photo=portion[0].media,
                         caption=text,
                         has_spoiler=has_spoiler,
+                        parse_mode=ParseMode.MARKDOWN_V2,
                     )
                 )
             case InputMediaVideo():
@@ -92,6 +96,7 @@ async def send_group(
                         video=portion[0].media,
                         caption=text,
                         has_spoiler=has_spoiler,
+                        parse_mode=ParseMode.MARKDOWN_V2,
                     )
                 )
             case InputMediaDocument():
@@ -100,6 +105,7 @@ async def send_group(
                         chat_id=chat_id,
                         document=portion[0].media,
                         caption=text,
+                        parse_mode=ParseMode.MARKDOWN_V2,
                     )
                 )
 
