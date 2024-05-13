@@ -1,4 +1,5 @@
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.constants import MessageOriginType
 from telegram.ext import (
     CallbackQueryHandler,
     CommandHandler,
@@ -7,6 +8,7 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
+from telegram.helpers import escape_markdown
 
 from db_op import Banned_user, Submitter
 from review_utils import reply_review_message
@@ -34,7 +36,13 @@ async def confirm_submission(
         await query.edit_message_text(text="投稿已取消")
     elif query.data.startswith(("anonymous", "realname")):
         if query.data.startswith("realname"):
-            submission["text"] += f"\n\nby {user.full_name}"
+            sign_string = f"_via_ [{escape_markdown(user.full_name,version=2,)}](tg://user?id={user.id})"
+            # if the last line is a forward message, put in the same line
+            if submission["text"].split("\n")[-1].startswith("_from_"):
+                submission["text"] += " " + sign_string
+            else:
+                submission["text"] += "\n\n" + sign_string
+
         submission_messages = await send_submission(
             context=context,
             chat_id=TG_REVIEWER_GROUP,
@@ -42,7 +50,7 @@ async def confirm_submission(
             media_type_list=submission["media_type_list"],
             documents_id_list=submission["document_id_list"],
             document_type_list=submission["document_type_list"],
-            text=submission["text"],
+            text=submission["text"].strip(),
         )
         submission_meta = {
             "submitter": [
@@ -81,9 +89,9 @@ async def collect_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # add new message to this user's message_groups dict
     if message.text_markdown_v2_urled:
-        submission["text"] += message.text_markdown_v2_urled + "\n"
+        submission["text"] += "\n\n" + message.text_markdown_v2_urled
     if message.caption_markdown_v2_urled:
-        submission["text"] += message.caption_markdown_v2_urled + "\n"
+        submission["text"] += "\n\n" + message.caption_markdown_v2_urled
     if message.photo:
         submission["media_id_list"].append(message.photo[-1].file_id)
         submission["media_type_list"].append("photo")
@@ -95,7 +103,21 @@ async def collect_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
         submission["document_type_list"].append("document")
     if submission["first_message_id"] is None:
         submission["first_message_id"] = message.message_id
-
+    if message.forward_origin is not None:
+        forward_string = "\n\n_from_ "
+        match message.forward_origin.type:
+            case MessageOriginType.USER:
+                forward_string += f"[{escape_markdown(message.forward_origin.sender_user.full_name,version=2,)}](tg://user?id={message.forward_origin.sender_user.id})"
+            case MessageOriginType.CHAT:
+                forward_string += f"[{escape_markdown(message.forward_origin.sender_chat.title,version=2,)}]({message.forward_origin.sender_chat.link})"
+            case MessageOriginType.CHANNEL:
+                forward_string += f"[{escape_markdown(message.forward_origin.chat.title,version=2,)}]({message.forward_origin.chat.link}/{message.forward_origin.message_id})"
+            case MessageOriginType.HIDDEN_USER:
+                forward_string += escape_markdown(
+                    message.forward_origin.sender_user_name,
+                    version=2,
+                )
+        submission["text"] += f"{forward_string}"
     # show preview of all messages this user has sent
     submission["last_preview_messages"].extend(
         await send_submission(
