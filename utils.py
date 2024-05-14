@@ -53,6 +53,7 @@ async def send_group(
 
     # use item_list and type_list to build a list of telegram.InputMediaDocument, telegram.InputMediaPhoto, telegram.InputMediaVideo
     media = []
+    stickers = []
     for i in range(len(item_list)):
         match type_list[i]:
             case "photo":
@@ -65,6 +66,18 @@ async def send_group(
                 )
             case "document":
                 media.append(InputMediaDocument(item_list[i]))
+            case "sticker":
+                stickers.append(item_list[i])
+
+    # if there're only stickers and text message, send text message additionally
+    if not media and text:
+        sent_messages.append(
+            await context.bot.send_message(
+                chat_id=chat_id,
+                text=text,
+                parse_mode=ParseMode.MARKDOWN_V2,
+            )
+        )
 
     for i in range(0, len(media), 10):
         portion = media[i : i + 10]
@@ -108,7 +121,17 @@ async def send_group(
                         parse_mode=ParseMode.MARKDOWN_V2,
                     )
                 )
-
+    # since sticker can not take text caption,
+    # and forwarding message to publish channel 
+    # require first message to take text info,
+    # just send sticker at the end
+    for sticker in stickers:
+        sent_messages.append(
+            await context.bot.send_sticker(
+                chat_id=chat_id,
+                sticker=sticker,
+            )
+        )
     return sent_messages
 
 

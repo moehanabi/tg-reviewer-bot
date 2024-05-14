@@ -98,6 +98,9 @@ async def collect_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if message.video:
         submission["media_id_list"].append(message.video.file_id)
         submission["media_type_list"].append("video")
+    if message.sticker:
+        submission["media_id_list"].append(message.sticker.file_id)
+        submission["media_type_list"].append("sticker")
     if message.document:
         submission["document_id_list"].append(message.document.file_id)
         submission["document_type_list"].append("document")
