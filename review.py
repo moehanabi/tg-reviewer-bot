@@ -154,7 +154,7 @@ async def approve_submission(
             [
                 InlineKeyboardButton(
                     "💬 回复投稿人",
-                    switch_inline_query_current_chat="/comment 请回复原消息并修改此处文字",
+                    switch_inline_query_current_chat="/comment ",
                 ),
                 InlineKeyboardButton(
                     "↩️ 撤稿",
@@ -229,7 +229,7 @@ async def reject_submission(
                     [
                         InlineKeyboardButton(
                             "💬 回复投稿人",
-                            switch_inline_query_current_chat="/comment 请回复原消息并修改此处文字",
+                            switch_inline_query_current_chat="/comment ",
                         )
                     ],
                 ]
@@ -320,7 +320,7 @@ async def reject_submission(
         [
             InlineKeyboardButton(
                 "自定义理由",
-                switch_inline_query_current_chat="/reject 请回复原消息并修改此处文字",
+                switch_inline_query_current_chat="/reject ",
             ),
             InlineKeyboardButton("暂无理由", callback_data="REASON.NONE"),
         ]
@@ -348,7 +348,7 @@ async def reject_submission(
                 [
                     InlineKeyboardButton(
                         "💬 回复投稿人",
-                        switch_inline_query_current_chat="/comment 请回复原消息并修改此处文字",
+                        switch_inline_query_current_chat="/comment ",
                     )
                 ],
             ]
