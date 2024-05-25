@@ -12,7 +12,6 @@ from review_utils import (
     get_decision,
     get_rejection_reason_text,
     remove_decision,
-    send_result_to_submitter,
 )
 from utils import (
     APPROVE_NUMBER_REQUIRED,
