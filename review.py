@@ -78,13 +78,6 @@ async def approve_submission(
         return
     # else if the submission has been approved by enough reviewers
     await query.answer("✅ 投票成功，此条投稿已通过")
-    # send result to submitter
-    await send_result_to_submitter(
-        context,
-        submission_meta["submitter"][0],
-        submission_meta["submitter"][3],
-        "🎉 恭喜，投稿已通过审核",
-    )
     # increse submitter approved count
     Submitter.count_increase(submission_meta["submitter"][0], "approved_count")
     # increse reviewer count
@@ -166,6 +159,25 @@ async def approve_submission(
         text=generate_submission_meta_string(submission_meta),
         parse_mode=ParseMode.MARKDOWN_V2,
         reply_markup=inline_keyboard,
+    )
+    # send result to submitter
+    await send_result_to_submitter(
+        context,
+        submission_meta["submitter"][0],
+        submission_meta["submitter"][3],
+        "🎉 恭喜，投稿已通过审核",
+        inline_keyboard_markup=InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        "在频道中查看", url=sent_messages[0].link
+                    ),
+                    InlineKeyboardButton(
+                        "查看评论区", url=f"{sent_messages[0].link}?comment=1"
+                    ),
+                ]
+            ]
+        ),
     )
 
 
