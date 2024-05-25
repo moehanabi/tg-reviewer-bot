@@ -216,8 +216,16 @@ async def reject_submission(
             action,
         ]
         await query.answer("✅ 投票成功，此条投稿已被拒绝")
+        inline_keyboard_content = []
+        inline_keyboard_content.append(
+            [
+                InlineKeyboardButton(
+                    "💬 回复投稿人",
+                    switch_inline_query_current_chat="/comment ",
+                )
+            ]
+        )
         # send the submittion to rejected channel
-        inline_keyboard = None
         if TG_REJECTED_CHANNEL:
             sent_message = await send_submission(
                 context=context,
@@ -230,17 +238,11 @@ async def reject_submission(
                 + "\n"
                 + append_messages_string,
             )
-            inline_keyboard = InlineKeyboardMarkup(
+            inline_keyboard_content.extend(
                 [
                     [
                         InlineKeyboardButton(
                             "在拒稿频道中查看", url=sent_message[-1].link
-                        )
-                    ],
-                    [
-                        InlineKeyboardButton(
-                            "💬 回复投稿人",
-                            switch_inline_query_current_chat="/comment ",
                         )
                     ],
                 ]
@@ -248,7 +250,7 @@ async def reject_submission(
         await review_message.edit_text(
             text=generate_submission_meta_string(submission_meta),
             parse_mode=ParseMode.MARKDOWN_V2,
-            reply_markup=inline_keyboard,
+            reply_markup=InlineKeyboardMarkup(inline_keyboard_content),
         )
         # send result to submitter
         await send_result_to_submitter(
@@ -336,6 +338,14 @@ async def reject_submission(
             InlineKeyboardButton("暂无理由", callback_data="REASON.NONE"),
         ]
     )
+    inline_keyboard_content.append(
+        [
+            InlineKeyboardButton(
+                "💬 回复投稿人",
+                switch_inline_query_current_chat="/comment ",
+            )
+        ]
+    )
     # send the submittion to rejected channel
     if TG_REJECTED_CHANNEL:
         sent_message = await send_submission(
@@ -354,12 +364,6 @@ async def reject_submission(
                 [
                     InlineKeyboardButton(
                         "在拒稿频道中查看", url=sent_message[-1].link
-                    )
-                ],
-                [
-                    InlineKeyboardButton(
-                        "💬 回复投稿人",
-                        switch_inline_query_current_chat="/comment ",
                     )
                 ],
             ]

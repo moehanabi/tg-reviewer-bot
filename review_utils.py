@@ -145,10 +145,15 @@ async def reject_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 query.data.split(".")[1]
             )
     await query.answer()
-    inline_keyboard = None
     if TG_REJECTED_CHANNEL:
+        # rejected submission and comment
         inline_keyboard = InlineKeyboardMarkup(
             review_message.reply_markup.inline_keyboard[-2:]
+        )
+    else:
+        # comment
+        inline_keyboard = InlineKeyboardMarkup(
+            review_message.reply_markup.inline_keyboard[-1:]
         )
     await review_message.edit_text(
         text=generate_submission_meta_string(submission_meta),
@@ -312,10 +317,15 @@ async def send_custom_rejection_reason(
         return
 
     submission_meta["reviewer"][update.message.from_user.id][2] = reject_msg
-    inline_keyboard = None
     if TG_REJECTED_CHANNEL:
+        # rejected submission and comment
         inline_keyboard = InlineKeyboardMarkup(
-            [review_message.reply_markup.inline_keyboard[-1]]
+            review_message.reply_markup.inline_keyboard[-2:]
+        )
+    else:
+        # comment
+        inline_keyboard = InlineKeyboardMarkup(
+            review_message.reply_markup.inline_keyboard[-1:]
         )
     await review_message.edit_text(
         text=generate_submission_meta_string(submission_meta),
