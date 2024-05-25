@@ -258,6 +258,12 @@ async def reject_submission(
             submission_meta["submitter"][0],
             submission_meta["submitter"][3],
             f"😢 很抱歉，投稿未通过审核。\n原因：{get_rejection_reason_text(submission_meta['reviewer'][query.from_user.id][2])}",
+            # link to rejected submission button
+            inline_keyboard_markup=(
+                InlineKeyboardMarkup([inline_keyboard_content[-1]])
+                if TG_REJECTED_CHANNEL
+                else None
+            ),
         )
         # increse submitter rejected count
         Submitter.count_increase(

@@ -169,6 +169,12 @@ async def reject_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
         submission_meta["submitter"][0],
         submission_meta["submitter"][3],
         f"😢 很抱歉，投稿未通过审核。{reason}",
+        # link to rejected submission button
+        inline_keyboard_markup=(
+            InlineKeyboardMarkup([inline_keyboard.inline_keyboard[-1]])
+            if TG_REJECTED_CHANNEL
+            else None
+        ),
     )
 
 
@@ -339,6 +345,12 @@ async def send_custom_rejection_reason(
         submission_meta["submitter"][0],
         submission_meta["submitter"][3],
         f"😢 很抱歉，投稿未通过审核。\n原因：{reject_msg}",
+        # link to rejected submission button
+        inline_keyboard_markup=(
+            InlineKeyboardMarkup([inline_keyboard.inline_keyboard[-1]])
+            if TG_REJECTED_CHANNEL
+            else None
+        ),
     )
     # delete the custom rejection reason message if the bot can
     try:
