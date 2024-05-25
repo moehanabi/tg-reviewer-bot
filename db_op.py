@@ -169,7 +169,7 @@ class Reviewer(Base):
 
 class DB:
     def __init__(self, database_url):
-        self.engine = create_engine(database_url)
+        self.engine = create_engine(database_url, pool_pre_ping=True)
         self.Session = sessionmaker(bind=self.engine)
         Base.metadata.create_all(self.engine)
 
