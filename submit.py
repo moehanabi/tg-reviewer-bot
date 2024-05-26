@@ -101,7 +101,11 @@ async def collect_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if message.sticker:
         submission["media_id_list"].append(message.sticker.file_id)
         submission["media_type_list"].append("sticker")
-    if message.document:
+    if message.animation:   # GIF
+        submission["media_id_list"].append(message.animation.file_id)
+        submission["media_type_list"].append("animation")
+    # elif because gif is also a document but can not be sent as a group
+    elif message.document:
         submission["document_id_list"].append(message.document.file_id)
         submission["document_type_list"].append("document")
     if submission["first_message_id"] is None:
