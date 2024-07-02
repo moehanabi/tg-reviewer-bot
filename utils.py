@@ -4,6 +4,7 @@ from telegram import (
     InputMediaDocument,
     InputMediaPhoto,
     InputMediaVideo,
+    LinkPreviewOptions,
     ReplyParameters,
 )
 from telegram.constants import ParseMode
@@ -168,6 +169,7 @@ async def send_submission(
                 chat_id=chat_id,
                 text=text,
                 parse_mode=ParseMode.MARKDOWN_V2,
+                link_preview_options=LinkPreviewOptions(is_disabled=True),
             )
         )
         return sent_messages
