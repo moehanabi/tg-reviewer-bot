@@ -16,6 +16,7 @@ from utils import (
     TG_REJECTED_CHANNEL,
     TG_RETRACT_NOTIFY,
     send_result_to_submitter,
+    send_submission,
 )
 
 """
@@ -134,8 +135,8 @@ async def reject_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # if the reviewer has rejected the submission
     match query.data:
-        case "REASON.NONE":
-            # NONE's index is the length of REJECTION_REASON (means the last number)
+        case "REASON.IGNORE":
+            # IGNORE's index is the length of REJECTION_REASON (means the last number)
             submission_meta["reviewer"][query.from_user.id][2] = len(
                 REJECTION_REASON
             )
@@ -145,36 +146,95 @@ async def reject_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 query.data.split(".")[1]
             )
     await query.answer()
-    if TG_REJECTED_CHANNEL:
-        # rejected submission and comment
-        inline_keyboard = InlineKeyboardMarkup(
-            review_message.reply_markup.inline_keyboard[-2:]
+
+    # send the submittion to rejected channel
+    await send_to_rejected_channel(
+        update=update, context=context, submission_meta=submission_meta
+    )
+
+
+async def send_to_rejected_channel(
+    update: Update, context: ContextTypes.DEFAULT_TYPE, submission_meta=None
+):
+    query = update.callback_query
+    review_message = update.effective_message
+    origin_message = review_message.reply_to_message
+
+    # get all append messages from submission_meta['append']
+    append_messages = []
+    for append_list in submission_meta["append"].values():
+        append_messages.extend(append_list)
+    append_messages_string = "\n".join(append_messages)
+
+    inline_keyboard_content = []
+    inline_keyboard_content.append(
+        [
+            InlineKeyboardButton(
+                "💬 回复投稿人",
+                switch_inline_query_current_chat="/comment ",
+            )
+        ]
+    )
+
+    # if has rejected channel and not IGNORE
+    if TG_REJECTED_CHANNEL and submission_meta["reviewer"][query.from_user.id][
+        2
+    ] != len(REJECTION_REASON):
+        # send the submittion to rejected channel
+        sent_message = await send_submission(
+            context=context,
+            chat_id=TG_REJECTED_CHANNEL,
+            media_id_list=submission_meta["media_id_list"],
+            media_type_list=submission_meta["media_type_list"],
+            documents_id_list=submission_meta["documents_id_list"],
+            document_type_list=submission_meta["document_type_list"],
+            text=(
+                (
+                    origin_message.text_markdown_v2_urled
+                    or origin_message.caption_markdown_v2_urled
+                )
+                or ""
+            )
+            + "\n"
+            + append_messages_string,
         )
-    else:
-        # comment
-        inline_keyboard = InlineKeyboardMarkup(
-            review_message.reply_markup.inline_keyboard[-1:]
+        inline_keyboard_content.extend(
+            [
+                [
+                    InlineKeyboardButton(
+                        "在拒稿频道中查看", url=sent_message[-1].link
+                    )
+                ],
+            ]
         )
+        # send result to submitter
+        reason = f"\n原因：{get_rejection_reason_text(submission_meta['reviewer'][query.from_user.id][2])}"
+        await send_result_to_submitter(
+            context,
+            submission_meta["submitter"][0],
+            submission_meta["submitter"][3],
+            f"😢 很抱歉，投稿未通过审核。{reason}",
+            # link to rejected submission button
+            inline_keyboard_markup=(
+                InlineKeyboardMarkup(
+                    [
+                        [
+                            InlineKeyboardButton(
+                                "在拒稿频道中查看", url=sent_message[-1].link
+                            )
+                        ],
+                    ]
+                )
+                if TG_REJECTED_CHANNEL
+                else None
+            ),
+        )
+
+    # delete reason buttons and reserve the comment button and rejected channel link button
     await review_message.edit_text(
         text=generate_submission_meta_string(submission_meta),
         parse_mode=ParseMode.MARKDOWN_V2,
-        reply_markup=inline_keyboard,
-    )
-    # send result to submitter
-    reason = f"\n原因：{get_rejection_reason_text(submission_meta['reviewer'][query.from_user.id][2])}"
-    if reason == "\n原因：暂无理由":
-        reason = ""
-    await send_result_to_submitter(
-        context,
-        submission_meta["submitter"][0],
-        submission_meta["submitter"][3],
-        f"😢 很抱歉，投稿未通过审核。{reason}",
-        # link to rejected submission button
-        inline_keyboard_markup=(
-            InlineKeyboardMarkup([inline_keyboard.inline_keyboard[-1]])
-            if TG_REJECTED_CHANNEL
-            else None
-        ),
+        reply_markup=InlineKeyboardMarkup(inline_keyboard_content),
     )
 
 
@@ -252,7 +312,9 @@ async def remove_append_message(
 
 
 async def comment_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    comment_message = update.message.text_markdown_v2_urled.split("/comment ")[1]
+    comment_message = update.message.text_markdown_v2_urled.split("/comment ")[
+        1
+    ]
     if not update.message.reply_to_message:
         return
     review_message = update.message.reply_to_message
@@ -448,8 +510,8 @@ def get_rejection_reason_text(option):
     if isinstance(option, int):
         if option < len(REJECTION_REASON):
             option_text = REJECTION_REASON[option]
-        elif option == len(REJECTION_REASON):
-            option_text = "暂无理由"
+        elif option == len(REJECTION_REASON):  # JUST IGNORE IT!!
+            option_text = "忽略此投稿"
     elif option == ReviewChoice.REJECT_DUPLICATE:
         option_text = "已在频道发布过或已有人投稿过"
     else:

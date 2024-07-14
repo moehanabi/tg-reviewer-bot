@@ -12,6 +12,7 @@ from review_utils import (
     get_decision,
     get_rejection_reason_text,
     remove_decision,
+    send_to_rejected_channel,
 )
 from utils import (
     APPROVE_NUMBER_REQUIRED,
@@ -113,7 +114,13 @@ async def approve_submission(
         media_type_list=submission_meta["media_type_list"],
         documents_id_list=submission_meta["documents_id_list"],
         document_type_list=submission_meta["document_type_list"],
-        text=((origin_message.text_markdown_v2_urled or origin_message.caption_markdown_v2_urled) or "")
+        text=(
+            (
+                origin_message.text_markdown_v2_urled
+                or origin_message.caption_markdown_v2_urled
+            )
+            or ""
+        )
         + "\n"
         + append_messages_string,
         has_spoiler=has_spoiler,
@@ -188,7 +195,6 @@ async def reject_submission(
 
     action = query.data.split(".")[0]
     review_message = update.effective_message
-    origin_message = review_message.reply_to_message
     reviewer_id, reviewer_username, reviewer_fullname = (
         query.from_user.id,
         query.from_user.username,
@@ -199,12 +205,6 @@ async def reject_submission(
             review_message.text_markdown_v2_urled.split("/")[-1][:-1]
         )
     )
-
-    # get all append messages from submission_meta['append']
-    append_messages = []
-    for append_list in submission_meta["append"].values():
-        append_messages.extend(append_list)
-    append_messages_string = "\n".join(append_messages)
 
     # if REJECT_DUPLICATE, only one reviewer is enough
     if action == ReviewChoice.REJECT_DUPLICATE:
@@ -226,45 +226,10 @@ async def reject_submission(
             ]
         )
         # send the submittion to rejected channel
-        if TG_REJECTED_CHANNEL:
-            sent_message = await send_submission(
-                context=context,
-                chat_id=TG_REJECTED_CHANNEL,
-                media_id_list=submission_meta["media_id_list"],
-                media_type_list=submission_meta["media_type_list"],
-                documents_id_list=submission_meta["documents_id_list"],
-                document_type_list=submission_meta["document_type_list"],
-                text=((origin_message.text_markdown_v2_urled or origin_message.caption_markdown_v2_urled) or "")
-                + "\n"
-                + append_messages_string,
-            )
-            inline_keyboard_content.extend(
-                [
-                    [
-                        InlineKeyboardButton(
-                            "在拒稿频道中查看", url=sent_message[-1].link
-                        )
-                    ],
-                ]
-            )
-        await review_message.edit_text(
-            text=generate_submission_meta_string(submission_meta),
-            parse_mode=ParseMode.MARKDOWN_V2,
-            reply_markup=InlineKeyboardMarkup(inline_keyboard_content),
+        await send_to_rejected_channel(
+            update=update, context=context, submission_meta=submission_meta
         )
-        # send result to submitter
-        await send_result_to_submitter(
-            context,
-            submission_meta["submitter"][0],
-            submission_meta["submitter"][3],
-            f"😢 很抱歉，投稿未通过审核。\n原因：{get_rejection_reason_text(submission_meta['reviewer'][query.from_user.id][2])}",
-            # link to rejected submission button
-            inline_keyboard_markup=(
-                InlineKeyboardMarkup([inline_keyboard_content[-1]])
-                if TG_REJECTED_CHANNEL
-                else None
-            ),
-        )
+
         # increse submitter rejected count
         Submitter.count_increase(
             submission_meta["submitter"][0], "rejected_count"
@@ -341,7 +306,7 @@ async def reject_submission(
                 "自定义理由",
                 switch_inline_query_current_chat="/reject ",
             ),
-            InlineKeyboardButton("暂无理由", callback_data="REASON.NONE"),
+            InlineKeyboardButton("忽略此投稿", callback_data="REASON.IGNORE"),
         ]
     )
     inline_keyboard_content.append(
@@ -352,28 +317,6 @@ async def reject_submission(
             )
         ]
     )
-    # send the submittion to rejected channel
-    if TG_REJECTED_CHANNEL:
-        sent_message = await send_submission(
-            context=context,
-            chat_id=TG_REJECTED_CHANNEL,
-            media_id_list=submission_meta["media_id_list"],
-            media_type_list=submission_meta["media_type_list"],
-            documents_id_list=submission_meta["documents_id_list"],
-            document_type_list=submission_meta["document_type_list"],
-            text=((origin_message.text_markdown_v2_urled or origin_message.caption_markdown_v2_urled) or "")
-            + "\n"
-            + append_messages_string,
-        )
-        inline_keyboard_content.extend(
-            [
-                [
-                    InlineKeyboardButton(
-                        "在拒稿频道中查看", url=sent_message[-1].link
-                    )
-                ],
-            ]
-        )
     await review_message.edit_text(
         text=generate_submission_meta_string(submission_meta),
         parse_mode=ParseMode.MARKDOWN_V2,
