@@ -549,21 +549,15 @@ def get_submission_status(submission_meta):
     review_options = [
         reviewer[2] for reviewer in submission_meta["reviewer"].values()
     ]
-    if (
-        review_options.count(ReviewChoice.NSFW)
-        + review_options.count(ReviewChoice.SFW)
-        >= APPROVE_NUMBER_REQUIRED
-    ):
+    approve_num = review_options.count(
+        ReviewChoice.NSFW
+    ) + review_options.count(ReviewChoice.SFW)
+    reject_noreason_num = review_options.count(ReviewChoice.REJECT)
+    reject_reason_num = len(review_options) - approve_num - reject_noreason_num
+
+    if approve_num >= APPROVE_NUMBER_REQUIRED:
         status = SubmissionStatus.APPROVED
-    elif review_options.count(ReviewChoice.REJECT) >= REJECT_NUMBER_REQUIRED:
-        status = SubmissionStatus.REJECTED_NO_REASON
-    elif (
-        ReviewChoice.REJECT_DUPLICATE in review_options
-        or review_options.count(ReviewChoice.NSFW)
-        + review_options.count(ReviewChoice.SFW)
-        + review_options.count(ReviewChoice.REJECT)
-        < len(review_options)
-    ):
+    elif reject_reason_num > 0:
         # At least one reviewer has given rejection reason
         status = SubmissionStatus.REJECTED
         for review_option in review_options:
@@ -574,6 +568,8 @@ def get_submission_status(submission_meta):
             ]:
                 rejection_reason = get_rejection_reason_text(review_option)
                 break
+    elif reject_noreason_num >= REJECT_NUMBER_REQUIRED:
+        status = SubmissionStatus.REJECTED_NO_REASON
     else:
         status = SubmissionStatus.PENDING
     return status, rejection_reason
