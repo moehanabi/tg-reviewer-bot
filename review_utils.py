@@ -13,6 +13,7 @@ from utils import (
     REJECT_NUMBER_REQUIRED,
     REJECTION_REASON,
     TG_PUBLISH_CHANNEL,
+    TG_REJECT_REASON_USER_LIMIT,
     TG_REJECTED_CHANNEL,
     TG_RETRACT_NOTIFY,
     send_result_to_submitter,
@@ -124,27 +125,37 @@ async def reject_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
             review_message.text_markdown_v2_urled.split("/")[-1][:-1]
         )
     )
-    # if the reviewer has not rejected the submission
-    if (
-        query.from_user.id not in submission_meta["reviewer"]
-        or submission_meta["reviewer"][query.from_user.id][2]
-        != ReviewChoice.REJECT
-    ):
-        await query.answer("😂 你没有投拒绝票")
-        return
+
+    reviewer_id, reviewer_username, reviewer_fullname = (
+        query.from_user.id,
+        query.from_user.username,
+        query.from_user.full_name,
+    )
+
+    if TG_REJECT_REASON_USER_LIMIT:
+        # if the reviewer has not rejected the submission
+        if (
+            reviewer_id not in submission_meta["reviewer"]
+            or submission_meta["reviewer"][reviewer_id][2]
+            != ReviewChoice.REJECT
+        ):
+            await query.answer("😂 你没有投拒绝票")
+            return
 
     # if the reviewer has rejected the submission
     match query.data:
         case "REASON.IGNORE":
             # IGNORE's index is the length of REJECTION_REASON (means the last number)
-            submission_meta["reviewer"][query.from_user.id][2] = len(
-                REJECTION_REASON
-            )
+            reason = len(REJECTION_REASON)
         case _:
             # every rejection reason has an index, see REJECTION_REASON
-            submission_meta["reviewer"][query.from_user.id][2] = int(
-                query.data.split(".")[1]
-            )
+            reason = int(query.data.split(".")[1])
+
+    submission_meta["reviewer"][reviewer_id] = [
+        reviewer_username,
+        reviewer_fullname,
+        reason,
+    ]
     await query.answer()
 
     # send the submittion to rejected channel
@@ -356,15 +367,24 @@ async def send_custom_rejection_reason(
         SubmissionStatus.REJECTED,
     ]:
         return
-    # if the reviewer has not rejected the submission
-    if update.message.from_user.id not in submission_meta[
-        "reviewer"
-    ] or submission_meta["reviewer"][update.message.from_user.id][2] in [
-        ReviewChoice.SFW,
-        ReviewChoice.NSFW,
-    ]:
-        await update.message.reply_text("😂 你没有投拒绝票")
-        return
+
+    user = update.message.from_user
+    reviewer_id, reviewer_username, reviewer_fullname = (
+        user.id,
+        user.username,
+        user.full_name,
+    )
+
+    if TG_REJECT_REASON_USER_LIMIT:
+        # if the reviewer has not rejected the submission
+        if reviewer_id not in submission_meta["reviewer"] or submission_meta[
+            "reviewer"
+        ][reviewer_id][2] in [
+            ReviewChoice.SFW,
+            ReviewChoice.NSFW,
+        ]:
+            await update.message.reply_text("😂 你没有投拒绝票")
+            return
     # if the reviewer has rejected the duplicate submission without other reviewer rejecting it
     options = [
         reviewer[2] for reviewer in submission_meta["reviewer"].values()
@@ -372,19 +392,23 @@ async def send_custom_rejection_reason(
     approve_num = options.count(ReviewChoice.NSFW) + options.count(
         ReviewChoice.SFW
     )
-    if submission_meta["reviewer"][update.message.from_user.id][
-        2
-    ] == ReviewChoice.REJECT_DUPLICATE and approve_num + 1 == len(options):
-        await update.message.reply_text("😢 重复投稿一票否决不可修改理由")
-        return
-    # if the reason has not been changed
-    if (
-        submission_meta["reviewer"][update.message.from_user.id][2]
-        == reject_msg
-    ):
-        return
 
-    submission_meta["reviewer"][update.message.from_user.id][2] = reject_msg
+    if reviewer_id in submission_meta["reviewer"]:
+        if submission_meta["reviewer"][reviewer_id][
+            2
+        ] == ReviewChoice.REJECT_DUPLICATE and approve_num + 1 == len(options):
+            await update.message.reply_text("😢 重复投稿一票否决不可修改理由")
+            return
+        # if the reason has not been changed
+        if submission_meta["reviewer"][reviewer_id][2] == reject_msg:
+            return
+
+    submission_meta["reviewer"][reviewer_id] = [
+        reviewer_username,
+        reviewer_fullname,
+        reject_msg,
+    ]
+
     if TG_REJECTED_CHANNEL:
         # rejected submission and comment
         inline_keyboard = InlineKeyboardMarkup(
