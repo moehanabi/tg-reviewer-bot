@@ -362,10 +362,15 @@ async def send_custom_rejection_reason(
         )
     )
     # if the submission has not been rejected yet
-    if get_submission_status(submission_meta)[0] not in [
-        SubmissionStatus.REJECTED_NO_REASON,
-        SubmissionStatus.REJECTED,
-    ]:
+    status = get_submission_status(submission_meta)
+    if (
+        status[0]
+        not in [
+            SubmissionStatus.REJECTED_NO_REASON,
+            SubmissionStatus.REJECTED,
+        ]
+        or status[1] == "通过后撤回"
+    ):
         return
 
     user = update.message.from_user
