@@ -30,6 +30,7 @@ except (TypeError, ValueError):
     REJECT_NUMBER_REQUIRED = 2
 REJECTION_REASON = os.environ.get("TG_REJECTION_REASON", "").split(":")
 TG_DB_URL = os.environ.get("TG_DB_URL", "")
+TG_SINGLE_MODE = os.getenv("TG_SINGLE_MODE", "True") == "True"
 
 
 class PrefixFilter(MessageFilter):
@@ -71,6 +72,7 @@ async def send_group(
                 media.append(InputMediaDocument(item_list[i]))
             case "sticker":
                 stickers.append(item_list[i])
+                text = text.strip()
             case "animation":
                 gifs.append(item_list[i])
 

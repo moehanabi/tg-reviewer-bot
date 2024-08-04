@@ -25,8 +25,13 @@ from review_utils import (
     send_custom_rejection_reason,
 )
 from stats import reviewer_stats, submitter_stats
-from submit import submission_handler
-from utils import TG_BOT_USERNAME, TG_REVIEWER_GROUP, TG_TOKEN, PrefixFilter
+from utils import (
+    TG_BOT_USERNAME,
+    TG_REVIEWER_GROUP,
+    TG_SINGLE_MODE,
+    TG_TOKEN,
+    PrefixFilter,
+)
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -46,8 +51,14 @@ if __name__ == "__main__":
         .build()
     )
 
-    application.add_handler(submission_handler)
+    if TG_SINGLE_MODE:
+        from submit_single import confirm_submit_handler, submission_handler
 
+        application.add_handler(confirm_submit_handler)
+    else:
+        from submit import submission_handler
+
+    application.add_handler(submission_handler)
     application.add_handlers(
         [
             CallbackQueryHandler(
