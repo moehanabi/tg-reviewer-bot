@@ -77,6 +77,8 @@ async def send_group(
                 gifs.append(item_list[i])
 
     # if there're only stickers and text message, send text message additionally
+    # always send text message (or media with caption) first because we don't save
+    # text in submission_meta and only get the text info from the first message!
     if not media and not gifs and text:
         sent_messages.append(
             await context.bot.send_message(
