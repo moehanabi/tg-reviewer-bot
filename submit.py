@@ -114,17 +114,31 @@ async def collect_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
         forward_string = "\n\n_from_ "
         match message.forward_origin.type:
             case MessageOriginType.USER:
-                forward_string += f"[{escape_markdown(message.forward_origin.sender_user.full_name,version=2,)}](tg://user?id={message.forward_origin.sender_user.id})"
+                forward_name = message.forward_origin.sender_user.full_name
+                forward_url = (
+                    f"tg://user?id={message.forward_origin.sender_user.id}"
+                )
+                forward_string += f"[{escape_markdown(forward_name,version=2,)}]({forward_url})"
             case MessageOriginType.CHAT:
-                forward_string += f"[{escape_markdown(message.forward_origin.sender_chat.title,version=2,)}]({message.forward_origin.sender_chat.link})"
+                forward_name = message.forward_origin.sender_chat.title
+                forward_url = message.forward_origin.sender_chat.link
+                forward_string += f"[{escape_markdown(forward_name,version=2,)}]({forward_url})"
             case MessageOriginType.CHANNEL:
-                forward_string += f"[{escape_markdown(message.forward_origin.chat.title,version=2,)}]({message.forward_origin.chat.link}/{message.forward_origin.message_id})"
+                forward_name = message.forward_origin.chat.title
+                forward_url = f"{message.forward_origin.chat.link}/{message.forward_origin.message_id}"
+                forward_string += f"[{escape_markdown(forward_name,version=2,)}]({forward_url})"
             case MessageOriginType.HIDDEN_USER:
+                forward_name = message.forward_origin.sender_user_name
                 forward_string += escape_markdown(
-                    message.forward_origin.sender_user_name,
+                    forward_name,
                     version=2,
                 )
-        submission["text"] += f"{forward_string}"
+        if (
+            submission["last_origin"] == ""
+            or submission["last_origin"] != forward_name
+        ):
+            submission["text"] += forward_string
+        submission["last_origin"] = forward_name
     # show preview of all messages this user has sent
     submission["last_preview_messages"].extend(
         await send_submission(
@@ -178,6 +192,7 @@ async def handle_new_submission(
         "last_preview_messages": [],
         "last_confirm_button": None,
         "first_message_id": None,
+        "last_origin": "",
     }
     return COLLECTING
 
