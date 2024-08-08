@@ -215,20 +215,22 @@ async def send_to_rejected_channel(
 
         inline_keyboard_content.extend(button_to_rejected_channel)
 
-    # send result to submitter
-    reason = f"\n原因：{get_rejection_reason_text(submission_meta['reviewer'][user_id][2])}"
-    await send_result_to_submitter(
-        context,
-        submission_meta["submitter"][0],
-        submission_meta["submitter"][3],
-        f"😢 很抱歉，投稿未通过审核。{reason}",
-        # link to rejected submission button
-        inline_keyboard_markup=(
-            InlineKeyboardMarkup(button_to_rejected_channel)
-            if TG_REJECTED_CHANNEL
-            else None
-        ),
-    )
+    # if not IGNORE, forward rejected message to it
+    if submission_meta["reviewer"][user_id][2] != len(REJECTION_REASON):
+        # send result to submitter
+        reason = f"\n原因：{get_rejection_reason_text(submission_meta['reviewer'][user_id][2])}"
+        await send_result_to_submitter(
+            context,
+            submission_meta["submitter"][0],
+            submission_meta["submitter"][3],
+            f"😢 很抱歉，投稿未通过审核。{reason}",
+            # link to rejected submission button
+            inline_keyboard_markup=(
+                InlineKeyboardMarkup(button_to_rejected_channel)
+                if TG_REJECTED_CHANNEL
+                else None
+            ),
+        )
 
     # delete reason buttons and reserve the comment button and rejected channel link button
     await review_message.edit_text(
