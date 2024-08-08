@@ -114,15 +114,7 @@ async def approve_submission(
         media_type_list=submission_meta["media_type_list"],
         documents_id_list=submission_meta["documents_id_list"],
         document_type_list=submission_meta["document_type_list"],
-        text=(
-            (
-                origin_message.text_markdown_v2_urled
-                or origin_message.caption_markdown_v2_urled
-            )
-            or ""
-        )
-        + "\n"
-        + append_messages_string,
+        text=submission_meta["text"] + "\n" + append_messages_string,
         has_spoiler=has_spoiler,
     )
     # edit the skip_all message

@@ -60,6 +60,7 @@ async def confirm_submission(
                 submission["first_message_id"],
             ],
             "reviewer": {},
+            "text": submission['text'],
             "media_id_list": submission["media_id_list"],
             "media_type_list": submission["media_type_list"],
             "documents_id_list": submission["document_id_list"],

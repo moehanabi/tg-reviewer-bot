@@ -165,11 +165,15 @@ async def reject_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def send_to_rejected_channel(
-    update: Update, context: ContextTypes.DEFAULT_TYPE, submission_meta=None
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+    submission_meta=None,
+    is_custom=False,
 ):
-    query = update.callback_query
+    user_id = update.effective_user.id
     review_message = update.effective_message
-    origin_message = review_message.reply_to_message
+    if is_custom:
+        review_message = review_message.reply_to_message
 
     # get all append messages from submission_meta['append']
     append_messages = []
@@ -187,10 +191,10 @@ async def send_to_rejected_channel(
         ]
     )
 
-    # if has rejected channel and not IGNORE
-    if TG_REJECTED_CHANNEL and submission_meta["reviewer"][query.from_user.id][
-        2
-    ] != len(REJECTION_REASON):
+    # if has rejected channel and not IGNORE, forward rejected message to it
+    if TG_REJECTED_CHANNEL and submission_meta["reviewer"][user_id][2] != len(
+        REJECTION_REASON
+    ):
         # send the submittion to rejected channel
         sent_message = await send_submission(
             context=context,
@@ -199,47 +203,32 @@ async def send_to_rejected_channel(
             media_type_list=submission_meta["media_type_list"],
             documents_id_list=submission_meta["documents_id_list"],
             document_type_list=submission_meta["document_type_list"],
-            text=(
-                (
-                    origin_message.text_markdown_v2_urled
-                    or origin_message.caption_markdown_v2_urled
-                )
-                or ""
-            )
-            + "\n"
-            + append_messages_string,
+            text=submission_meta["text"] + "\n" + append_messages_string,
         )
-        inline_keyboard_content.extend(
+        button_to_rejected_channel = [
             [
-                [
-                    InlineKeyboardButton(
-                        "在拒稿频道中查看", url=sent_message[-1].link
-                    )
-                ],
-            ]
-        )
-        # send result to submitter
-        reason = f"\n原因：{get_rejection_reason_text(submission_meta['reviewer'][query.from_user.id][2])}"
-        await send_result_to_submitter(
-            context,
-            submission_meta["submitter"][0],
-            submission_meta["submitter"][3],
-            f"😢 很抱歉，投稿未通过审核。{reason}",
-            # link to rejected submission button
-            inline_keyboard_markup=(
-                InlineKeyboardMarkup(
-                    [
-                        [
-                            InlineKeyboardButton(
-                                "在拒稿频道中查看", url=sent_message[-1].link
-                            )
-                        ],
-                    ]
+                InlineKeyboardButton(
+                    "在拒稿频道中查看", url=sent_message[-1].link
                 )
-                if TG_REJECTED_CHANNEL
-                else None
-            ),
-        )
+            ],
+        ]
+
+        inline_keyboard_content.extend(button_to_rejected_channel)
+
+    # send result to submitter
+    reason = f"\n原因：{get_rejection_reason_text(submission_meta['reviewer'][user_id][2])}"
+    await send_result_to_submitter(
+        context,
+        submission_meta["submitter"][0],
+        submission_meta["submitter"][3],
+        f"😢 很抱歉，投稿未通过审核。{reason}",
+        # link to rejected submission button
+        inline_keyboard_markup=(
+            InlineKeyboardMarkup(button_to_rejected_channel)
+            if TG_REJECTED_CHANNEL
+            else None
+        ),
+    )
 
     # delete reason buttons and reserve the comment button and rejected channel link button
     await review_message.edit_text(
@@ -414,35 +403,7 @@ async def send_custom_rejection_reason(
         reject_msg,
     ]
 
-    if TG_REJECTED_CHANNEL:
-        # rejected submission and comment
-        inline_keyboard = InlineKeyboardMarkup(
-            review_message.reply_markup.inline_keyboard[-2:]
-        )
-    else:
-        # comment
-        inline_keyboard = InlineKeyboardMarkup(
-            review_message.reply_markup.inline_keyboard[-1:]
-        )
-    await review_message.edit_text(
-        text=generate_submission_meta_string(submission_meta),
-        parse_mode=ParseMode.MARKDOWN_V2,
-        reply_markup=inline_keyboard,
-    )
-
-    # send result to submitter
-    await send_result_to_submitter(
-        context,
-        submission_meta["submitter"][0],
-        submission_meta["submitter"][3],
-        f"😢 很抱歉，投稿未通过审核。\n原因：{reject_msg}",
-        # link to rejected submission button
-        inline_keyboard_markup=(
-            InlineKeyboardMarkup([inline_keyboard.inline_keyboard[-1]])
-            if TG_REJECTED_CHANNEL
-            else None
-        ),
-    )
+    await send_to_rejected_channel(update, context, submission_meta, True)
     # delete the custom rejection reason message if the bot can
     try:
         await update.message.delete()
