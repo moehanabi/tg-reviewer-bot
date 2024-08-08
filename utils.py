@@ -76,18 +76,6 @@ async def send_group(
             case "animation":
                 gifs.append(item_list[i])
 
-    # if there're only stickers and text message, send text message additionally
-    # always send text message (or media with caption) first because we don't save
-    # text in submission_meta and only get the text info from the first message!
-    if not media and not gifs and text:
-        sent_messages.append(
-            await context.bot.send_message(
-                chat_id=chat_id,
-                text=text,
-                parse_mode=ParseMode.MARKDOWN_V2,
-            )
-        )
-
     # gifs can not be sent as a group
     for gif in gifs:
         sent_messages.append(
@@ -141,10 +129,7 @@ async def send_group(
                         parse_mode=ParseMode.MARKDOWN_V2,
                     )
                 )
-    # since sticker can not take text caption,
-    # and forwarding message to publish channel
-    # require first message to take text info,
-    # just send sticker at the end
+
     for sticker in stickers:
         sent_messages.append(
             await context.bot.send_sticker(
@@ -152,6 +137,17 @@ async def send_group(
                 sticker=sticker,
             )
         )
+
+    # if there're only stickers and text message, send text message additionally
+    if not media and not gifs and text:
+        sent_messages.append(
+            await context.bot.send_message(
+                chat_id=chat_id,
+                text=text,
+                parse_mode=ParseMode.MARKDOWN_V2,
+            )
+        )
+
     return sent_messages
 
 
