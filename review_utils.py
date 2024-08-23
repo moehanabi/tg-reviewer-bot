@@ -404,8 +404,8 @@ async def send_custom_rejection_reason(
         reviewer_fullname,
         reject_msg,
     ]
-
     await send_to_rejected_channel(update, context, submission_meta, True)
+    await update.message.reply_text("✅ 已发送")
     # delete the custom rejection reason message if the bot can
     try:
         await update.message.delete()
