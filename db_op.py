@@ -70,8 +70,8 @@ class Submitter(Base):
 class Banned_user(Base):
     __tablename__ = "banned_users"
     user_id: Mapped[id_pk]
-    user_name: Mapped[str] = mapped_column(String(50))
-    user_fullname: Mapped[str] = mapped_column(String(50))
+    user_name: Mapped[str] = mapped_column(String(50), nullable=True)
+    user_fullname: Mapped[str] = mapped_column(String(50), nullable=True)
     banned_reason: Mapped[str] = mapped_column(String(50), nullable=True)
     banned_date: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
