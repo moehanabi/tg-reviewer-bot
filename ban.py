@@ -38,6 +38,10 @@ async def ban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             await get_banned_user_info(
                 context, Banned_user.get_banned_user(user)
+            )
+            + escape_markdown(
+                f"\n\n#BAN_{user} #OPERATOR_{update.effective_user.id}",
+                version=2,
             ),
             parse_mode=ParseMode.MARKDOWN_V2,
         )
@@ -79,7 +83,11 @@ async def unban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
     else:
         await update.message.reply_text(
-            f"*{user}* 已解除屏蔽",
+            f"*{user}* "
+            + escape_markdown(
+                f"已解除屏蔽\n\n#UNBAN_{user} #OPERATOR_{update.effective_user.id}",
+                version=2,
+            ),
             parse_mode=ParseMode.MARKDOWN_V2,
         )
 
