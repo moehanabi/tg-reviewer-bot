@@ -3,25 +3,35 @@ import logging
 from telegram.ext import (
     ApplicationBuilder,
     CallbackQueryHandler,
+    CommandHandler,
     MessageHandler,
     filters,
 )
 
-from const import TG_BOT_USERNAME, TG_REVIEWER_GROUP, TG_TOKEN
+from ban import ban_user, list_banned_users, unban_user
 from review import (
-    ReviewChoice,
-    append_message,
     approve_submission,
-    comment_message,
     query_decision,
-    reject_reason,
     reject_submission,
-    remove_append_message,
-    send_custom_rejection_reason,
     withdraw_decision,
 )
-from submit import submission_handler
-from utils import PrefixFilter
+from review_utils import (
+    ReviewChoice,
+    append_message,
+    comment_message,
+    reject_reason,
+    remove_append_message,
+    retract_approved_submission,
+    send_custom_rejection_reason,
+)
+from stats import reviewer_stats, submitter_stats
+from utils import (
+    TG_BOT_USERNAME,
+    TG_REVIEWER_GROUP,
+    TG_SINGLE_MODE,
+    TG_TOKEN,
+    PrefixFilter,
+)
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -41,8 +51,14 @@ if __name__ == "__main__":
         .build()
     )
 
-    application.add_handler(submission_handler)
+    if TG_SINGLE_MODE:
+        from submit_single import confirm_submit_handler, submission_handler
 
+        application.add_handler(confirm_submit_handler)
+    else:
+        from submit import submission_handler
+
+    application.add_handler(submission_handler)
     application.add_handlers(
         [
             CallbackQueryHandler(
@@ -60,7 +76,8 @@ if __name__ == "__main__":
                 withdraw_decision, pattern=f"^{ReviewChoice.WITHDRAW}"
             ),
             CallbackQueryHandler(
-                append_message, pattern=f"^{ReviewChoice.APPEND}"
+                retract_approved_submission,
+                pattern=f"^{ReviewChoice.APPROVED_RETRACT}",
             ),
             CallbackQueryHandler(reject_reason, pattern=f"^REASON"),
             MessageHandler(
@@ -91,8 +108,42 @@ if __name__ == "__main__":
                 comment_message,
             ),
             MessageHandler(
-                filters.REPLY & filters.Chat(chat_id=int(TG_REVIEWER_GROUP)),
+                filters.REPLY
+                & filters.Chat(chat_id=int(TG_REVIEWER_GROUP))
+                & (
+                    PrefixFilter("/reject ")
+                    | PrefixFilter(f"@{TG_BOT_USERNAME} /reject ")
+                ),
                 send_custom_rejection_reason,
+            ),
+            CommandHandler(
+                "ban",
+                ban_user,
+                filters=~filters.UpdateType.EDITED_MESSAGE
+                & filters.Chat(chat_id=int(TG_REVIEWER_GROUP)),
+            ),
+            CommandHandler(
+                "unban",
+                unban_user,
+                filters=~filters.UpdateType.EDITED_MESSAGE
+                & filters.Chat(chat_id=int(TG_REVIEWER_GROUP)),
+            ),
+            CommandHandler(
+                "listban",
+                list_banned_users,
+                filters=~filters.UpdateType.EDITED_MESSAGE
+                & filters.Chat(chat_id=int(TG_REVIEWER_GROUP)),
+            ),
+            CommandHandler(
+                "stats",
+                submitter_stats,
+                filters=~filters.UpdateType.EDITED_MESSAGE,
+            ),
+            CommandHandler(
+                "reviewer_stats",
+                reviewer_stats,
+                filters=~filters.UpdateType.EDITED_MESSAGE
+                & filters.Chat(chat_id=int(TG_REVIEWER_GROUP)),
             ),
         ]
     )
