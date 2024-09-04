@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "tg-reviewer-bot"
+version = "0.1.0"
+description = "每日沙雕墙"
+authors = ["moehanabi <moehanabichan@gmail.com>", "快乐的老鼠宝宝 <laoshubaby@protonmail.com>"]
+license = "Proprietary"
+readme = "README.md"
+repository = "https://github.com/moehanabi/tg-reviewer-bot"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+packages = [{ include = "tg_reviewer_bot", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+python-telegram-bot = "^21.0.1"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

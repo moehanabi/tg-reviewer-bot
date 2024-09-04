@@ -2,6 +2,22 @@
 
 Telegram 投稿/审稿机器人，基于 Telegram Bot API 7.1 以及 python-telegram-bot v21.0.1
 
+## 开发前准备
+
+### 安装依赖项
+
+可以手动运行下面的指令来安装
+
+```shell
+pip install python-telegram-bot
+```
+
+或使用 poetry 来管理依赖
+
+```shell
+pip install poetry
+poetry install
+```
 ## 功能使用方法
 
 ### 投稿
