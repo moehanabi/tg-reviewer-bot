@@ -5,7 +5,7 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from telegram.helpers import escape_markdown
 
-from db_op import Reviewer, Submitter
+from src.database.db_op import Reviewer, Submitter
 from utils import TG_REVIEWER_GROUP
 
 

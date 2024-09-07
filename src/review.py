@@ -5,12 +5,11 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
-from db_op import Reviewer, Submitter
+from src.database.db_op import Reviewer, Submitter
 from review_utils import (
     ReviewChoice,
     generate_submission_meta_string,
     get_decision,
-    get_rejection_reason_text,
     remove_decision,
     send_to_rejected_channel,
 )
@@ -19,7 +18,6 @@ from utils import (
     REJECT_NUMBER_REQUIRED,
     REJECTION_REASON,
     TG_PUBLISH_CHANNEL,
-    TG_REJECTED_CHANNEL,
     send_result_to_submitter,
     send_submission,
 )
@@ -56,7 +54,7 @@ async def approve_submission(
         reviewer_fullname,
         action,
     ]
-    # increse reviewer approve count
+    # increase reviewer approve count
     Reviewer.count_increase(reviewer_id, "approve_count")
     # get options from all reviewers
     review_options = [
@@ -79,9 +77,9 @@ async def approve_submission(
         return
     # else if the submission has been approved by enough reviewers
     await query.answer("✅ 投票成功，此条投稿已通过")
-    # increse submitter approved count
+    # increase submitter approved count
     Submitter.count_increase(submission_meta["submitter"][0], "approved_count")
-    # increse reviewer count
+    # increase reviewer count
     for reviewer_id in submission_meta["reviewer"]:
         if submission_meta["reviewer"][reviewer_id][2] not in [
             ReviewChoice.SFW,
@@ -217,16 +215,16 @@ async def reject_submission(
                 )
             ]
         )
-        # send the submittion to rejected channel
+        # send the submission to rejected channel
         await send_to_rejected_channel(
             update=update, context=context, submission_meta=submission_meta
         )
 
-        # increse submitter rejected count
+        # increase submitter rejected count
         Submitter.count_increase(
             submission_meta["submitter"][0], "rejected_count"
         )
-        # increse reviewer count
+        # increase reviewer count
         Reviewer.count_increase(reviewer_id, "reject_count")
         for reviewer_id in submission_meta["reviewer"]:
             if submission_meta["reviewer"][reviewer_id][2] in [
@@ -247,7 +245,7 @@ async def reject_submission(
         reviewer_fullname,
         action,
     ]
-    # increse reviewer reject count
+    # increase reviewer reject count
     Reviewer.count_increase(reviewer_id, "reject_count")
     # get options from all reviewers
     review_options = [
@@ -266,9 +264,9 @@ async def reject_submission(
         return
     # else if the submission has been rejected by enough reviewers
     await query.answer("✅ 投票成功，此条投稿已被拒绝")
-    # increse submitter rejected count
+    # increase submitter rejected count
     Submitter.count_increase(submission_meta["submitter"][0], "rejected_count")
-    # increse reviewer count
+    # increase reviewer count
     for reviewer_id in submission_meta["reviewer"]:
         if submission_meta["reviewer"][reviewer_id][2] in [
             ReviewChoice.SFW,

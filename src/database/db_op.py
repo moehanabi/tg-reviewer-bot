@@ -13,7 +13,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 from typing_extensions import Annotated
 
-from utils import TG_DB_URL
+from src.utils import TG_DB_URL
 
 
 class Base(DeclarativeBase):

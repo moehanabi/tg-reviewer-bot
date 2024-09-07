@@ -10,8 +10,8 @@ from telegram.ext import (
 )
 from telegram.helpers import escape_markdown
 
-from db_op import Banned_user, Submitter
-from review_utils import reply_review_message
+from src.database.db_op import Banned_user, Submitter
+from src.review_utils import reply_review_message
 from utils import TG_BANNED_NOTIFY, TG_REVIEWER_GROUP, send_submission
 
 # set const as the state of one user

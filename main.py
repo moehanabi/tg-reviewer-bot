@@ -8,14 +8,14 @@ from telegram.ext import (
     filters,
 )
 
-from ban import ban_user, list_banned_users, unban_user
-from review import (
+from src.ban import ban_user, list_banned_users, unban_user
+from src.review import (
     approve_submission,
     query_decision,
     reject_submission,
     withdraw_decision,
 )
-from review_utils import (
+from src.review_utils import (
     ReviewChoice,
     append_message,
     comment_message,
@@ -24,8 +24,8 @@ from review_utils import (
     retract_approved_submission,
     send_custom_rejection_reason,
 )
-from stats import reviewer_stats, submitter_stats
-from utils import (
+from src.stats import reviewer_stats, submitter_stats
+from src.utils import (
     TG_BOT_USERNAME,
     TG_REVIEWER_GROUP,
     TG_SINGLE_MODE,
@@ -52,11 +52,11 @@ if __name__ == "__main__":
     )
 
     if TG_SINGLE_MODE:
-        from submit_single import confirm_submit_handler, submission_handler
+        from src.submit_single import confirm_submit_handler, submission_handler
 
         application.add_handler(confirm_submit_handler)
     else:
-        from submit import submission_handler
+        from src.submit import submission_handler
 
     application.add_handler(submission_handler)
     application.add_handlers(

@@ -7,7 +7,7 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from telegram.helpers import escape_markdown
 
-from db_op import Reviewer, Submitter
+from src.database.db_op import Reviewer, Submitter
 from utils import (
     APPROVE_NUMBER_REQUIRED,
     REJECT_NUMBER_REQUIRED,
@@ -679,7 +679,7 @@ def generate_submission_meta_string(submission_meta):
             tags += f" #USER_{reviewer_id} #REVIEWER_{reviewer_id}"
     tags += f" {status_tag}"
 
-    submission_meta_text = f"[\u200b](http://t.me/{base64.urlsafe_b64encode(pickle.dumps(submission_meta)).decode()})"
+    submission_meta_text = f"[\u200b](https://t.me/{base64.urlsafe_b64encode(pickle.dumps(submission_meta)).decode()})"
     visible_content = escape_markdown(
         dedent(
             f"""\

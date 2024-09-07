@@ -11,7 +11,7 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from telegram.ext.filters import MessageFilter
 
-# get args from environment virables
+# get args from environment variables
 TG_TOKEN = os.environ.get("TG_TOKEN")
 TG_REVIEWER_GROUP = os.environ.get("TG_REVIEWER_GROUP")
 TG_PUBLISH_CHANNEL = os.environ.get("TG_PUBLISH_CHANNEL")

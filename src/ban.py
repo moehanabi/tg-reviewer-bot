@@ -3,7 +3,7 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from telegram.helpers import escape_markdown
 
-from db_op import Banned_user
+from src.database.db_op import Banned_user
 from utils import get_name_from_uid
 
 

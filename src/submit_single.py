@@ -1,7 +1,5 @@
-from textwrap import dedent
-
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.constants import MessageOriginType, ParseMode
+from telegram.constants import MessageOriginType
 from telegram.ext import (
     CallbackQueryHandler,
     ContextTypes,
@@ -10,8 +8,8 @@ from telegram.ext import (
 )
 from telegram.helpers import escape_markdown
 
-from db_op import Submitter
-from review_utils import reply_review_message
+from src.database.db_op import Submitter
+from src.review_utils import reply_review_message
 from utils import TG_REVIEWER_GROUP, send_submission
 
 media_groups = {}
@@ -147,7 +145,7 @@ async def confirm_submission(
                     origin_message.sticker.file_id
                 )
                 submission["media_type_list"].append("sticker")
-                # just ignore any forward or realname infomation for sticker
+                # just ignore any forward or realname information for sticker
                 # in single submit mode because it is not allowed to have
                 # text with sticker
                 text = ""
