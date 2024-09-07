@@ -8,9 +8,10 @@ from telegram.ext import (
 )
 from telegram.helpers import escape_markdown
 
+from src.config import ReviewConfig
 from src.database.db_op import Submitter
 from src.review_utils import reply_review_message
-from utils import TG_REVIEWER_GROUP, send_submission
+from src.utils import send_submission
 
 media_groups = {}
 
@@ -163,7 +164,7 @@ async def confirm_submission(
 
         submission_messages = await send_submission(
             context=context,
-            chat_id=TG_REVIEWER_GROUP,
+            chat_id=ReviewConfig.REVIEWER_GROUP,
             media_id_list=submission["media_id_list"],
             media_type_list=submission["media_type_list"],
             documents_id_list=submission["document_id_list"],

@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 from sqlalchemy import (
@@ -13,7 +14,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, sessionmaker
 from typing_extensions import Annotated
 
-from src.utils import TG_DB_URL
+from src.config import Config
 
 
 class Base(DeclarativeBase):
@@ -83,7 +84,7 @@ class Banned_user(Base):
 
     @staticmethod
     def ban_user(
-        user_id, user_name, user_fullname, banned_by, banned_reason=None
+            user_id, user_name, user_fullname, banned_by, banned_reason=None
     ):
         try:
             db.insert(
@@ -201,4 +202,5 @@ class DB:
             session.execute(stmt)
 
 
-db = DB(TG_DB_URL)
+os.makedirs(Config.DATABASES_DIR, exist_ok=True)
+db = DB(f"sqlite:///{Config.DATABASES_DIR / 'system.db'}")

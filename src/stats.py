@@ -5,13 +5,13 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from telegram.helpers import escape_markdown
 
+from src.config import ReviewConfig
 from src.database.db_op import Reviewer, Submitter
-from utils import TG_REVIEWER_GROUP
 
 
 async def submitter_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     userid = update.effective_user.id
-    if str(update.effective_chat.id) == TG_REVIEWER_GROUP:
+    if str(update.effective_chat.id) == ReviewConfig.REVIEWER_GROUP:
         if not context.args:
             await update.message.reply_text("请提供用户ID")
             return

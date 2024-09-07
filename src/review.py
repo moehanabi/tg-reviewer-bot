@@ -5,26 +5,25 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
+from src.config import ReviewConfig
 from src.database.db_op import Reviewer, Submitter
-from review_utils import (
+from src.review_utils import (
     ReviewChoice,
     generate_submission_meta_string,
     get_decision,
     remove_decision,
     send_to_rejected_channel,
 )
-from utils import (
-    APPROVE_NUMBER_REQUIRED,
-    REJECT_NUMBER_REQUIRED,
-    REJECTION_REASON,
-    TG_PUBLISH_CHANNEL,
+from src.utils import (
     send_result_to_submitter,
     send_submission,
 )
 
+REJECTION_REASON = ReviewConfig.REJECTION_REASON.split(":")
+
 
 async def approve_submission(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
+        update: Update, context: ContextTypes.DEFAULT_TYPE
 ):
     query = update.callback_query
 
@@ -62,9 +61,9 @@ async def approve_submission(
     ]
     # if the submission has not been approved by enough reviewers
     if (
-        review_options.count(ReviewChoice.NSFW)
-        + review_options.count(ReviewChoice.SFW)
-        < APPROVE_NUMBER_REQUIRED
+            review_options.count(ReviewChoice.NSFW)
+            + review_options.count(ReviewChoice.SFW)
+            < ReviewConfig.APPROVE_NUMBER_REQUIRED
     ):
         await review_message.edit_text(
             text=generate_submission_meta_string(submission_meta),
@@ -96,7 +95,7 @@ async def approve_submission(
             [[InlineKeyboardButton("跳到下一条", url=f"https://t.me/")]]
         )
         skip_all = await context.bot.send_message(
-            chat_id=TG_PUBLISH_CHANNEL,
+            chat_id=ReviewConfig.PUBLISH_CHANNEL,
             text="⚠️ #NSFW 提前预警",
             reply_markup=inline_keyboard,
         )
@@ -107,7 +106,7 @@ async def approve_submission(
     append_messages_string = "\n".join(append_messages)
     sent_messages = await send_submission(
         context=context,
-        chat_id=TG_PUBLISH_CHANNEL,
+        chat_id=ReviewConfig.PUBLISH_CHANNEL,
         media_id_list=submission_meta["media_id_list"],
         media_type_list=submission_meta["media_type_list"],
         documents_id_list=submission_meta["documents_id_list"],
@@ -179,7 +178,7 @@ async def approve_submission(
 
 
 async def reject_submission(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
+        update: Update, context: ContextTypes.DEFAULT_TYPE
 ):
     query = update.callback_query
 
@@ -206,15 +205,12 @@ async def reject_submission(
             action,
         ]
         await query.answer("✅ 投票成功，此条投稿已被拒绝")
-        inline_keyboard_content = []
-        inline_keyboard_content.append(
-            [
-                InlineKeyboardButton(
-                    "💬 回复投稿人",
-                    switch_inline_query_current_chat="/comment ",
-                )
-            ]
-        )
+        inline_keyboard_content = [[
+            InlineKeyboardButton(
+                "💬 回复投稿人",
+                switch_inline_query_current_chat="/comment ",
+            )
+        ]]
         # send the submission to rejected channel
         await send_to_rejected_channel(
             update=update, context=context, submission_meta=submission_meta
@@ -252,7 +248,7 @@ async def reject_submission(
         reviewer[2] for reviewer in submission_meta["reviewer"].values()
     ]
     # if the submission has not been rejected by enough reviewers
-    if review_options.count(ReviewChoice.REJECT) < REJECT_NUMBER_REQUIRED:
+    if review_options.count(ReviewChoice.REJECT) < ReviewConfig.REJECT_NUMBER_REQUIRED:
         await review_message.edit_text(
             text=generate_submission_meta_string(submission_meta),
             parse_mode=ParseMode.MARKDOWN_V2,
@@ -287,7 +283,7 @@ async def reject_submission(
         if i + 1 < len(REJECTION_REASON):
             inline_keyboard_content[-1].append(
                 InlineKeyboardButton(
-                    REJECTION_REASON[i + 1], callback_data=f"REASON.{i+1}"
+                    REJECTION_REASON[i + 1], callback_data=f"REASON.{i + 1}"
                 )
             )
     inline_keyboard_content.append(
@@ -329,7 +325,7 @@ async def query_decision(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def withdraw_decision(
-    update: Update, context: ContextTypes.DEFAULT_TYPE
+        update: Update, context: ContextTypes.DEFAULT_TYPE
 ):
     query = update.callback_query
 

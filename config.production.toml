@@ -1,0 +1,16 @@
+BOT_TOKEN = "" # 机器人 Token 必填
+DATABASES_DIR = "" # 数据库路径
+LOG_LEVE = 20 # 日志等级
+SQLALCHEMY_LOG = false # sql日志
+
+[Review]
+REJECTED_CHANNEL = 0 # 拒稿频道
+PUBLISH_CHANNEL = 0 # 发布频道
+REVIEWER_GROUP = 0 # 审核群组
+SINGLE_MODE = true # 合并为单条投稿
+REJECTION_REASON = "内容不够有趣:内容不适当:重复投稿" # 拒稿理由
+REJECT_NUMBER_REQUIRED = 2 # 拒稿所需的最小审核人数
+APPROVE_NUMBER_REQUIRED = 2 # 通过所需的最小审核人数
+REJECT_REASON_USER_LIMIT = false # 是否限制只能由原拒稿人选择拒稿理由
+RETRACT_NOTIFY = true # 是否通知投稿者稿件被撤回
+BANNED_NOTIFY = true # 是否通知投稿者已被屏蔽

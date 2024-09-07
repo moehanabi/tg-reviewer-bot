@@ -7,18 +7,14 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from telegram.helpers import escape_markdown
 
+from src.config import ReviewConfig
 from src.database.db_op import Reviewer, Submitter
-from utils import (
-    APPROVE_NUMBER_REQUIRED,
-    REJECT_NUMBER_REQUIRED,
-    REJECTION_REASON,
-    TG_PUBLISH_CHANNEL,
-    TG_REJECT_REASON_USER_LIMIT,
-    TG_REJECTED_CHANNEL,
-    TG_RETRACT_NOTIFY,
+from src.utils import (
     send_result_to_submitter,
     send_submission,
 )
+
+REJECTION_REASON = ReviewConfig.REJECTION_REASON.split(":")
 
 """
 submission_meta = {
@@ -132,7 +128,7 @@ async def reject_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
         query.from_user.full_name,
     )
 
-    if TG_REJECT_REASON_USER_LIMIT:
+    if ReviewConfig.REJECT_REASON_USER_LIMIT:
         # if the reviewer has not rejected the submission
         if (
             reviewer_id not in submission_meta["reviewer"]
@@ -158,7 +154,7 @@ async def reject_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     await query.answer()
 
-    # send the submittion to rejected channel
+    # send the submission to rejected channel
     await send_to_rejected_channel(
         update=update, context=context, submission_meta=submission_meta
     )
@@ -181,24 +177,21 @@ async def send_to_rejected_channel(
         append_messages.extend(append_list)
     append_messages_string = "\n".join(append_messages)
 
-    inline_keyboard_content = []
-    inline_keyboard_content.append(
-        [
-            InlineKeyboardButton(
-                "💬 回复投稿人",
-                switch_inline_query_current_chat="/comment ",
-            )
-        ]
-    )
+    inline_keyboard_content = [[
+        InlineKeyboardButton(
+            "💬 回复投稿人",
+            switch_inline_query_current_chat="/comment ",
+        )
+    ]]
 
     # if has rejected channel and not IGNORE, forward rejected message to it
-    if TG_REJECTED_CHANNEL and submission_meta["reviewer"][user_id][2] != len(
+    if ReviewConfig.REJECTED_CHANNEL and submission_meta["reviewer"][user_id][2] != len(
         REJECTION_REASON
     ):
-        # send the submittion to rejected channel
+        # send the submission to rejected channel
         sent_message = await send_submission(
             context=context,
-            chat_id=TG_REJECTED_CHANNEL,
+            chat_id=ReviewConfig.REJECTED_CHANNEL,
             media_id_list=submission_meta["media_id_list"],
             media_type_list=submission_meta["media_type_list"],
             documents_id_list=submission_meta["documents_id_list"],
@@ -214,6 +207,8 @@ async def send_to_rejected_channel(
         ]
 
         inline_keyboard_content.extend(button_to_rejected_channel)
+    else:
+        return
 
     # if not IGNORE, forward rejected message to it
     if submission_meta["reviewer"][user_id][2] != len(REJECTION_REASON):
@@ -227,7 +222,7 @@ async def send_to_rejected_channel(
             # link to rejected submission button
             inline_keyboard_markup=(
                 InlineKeyboardMarkup(button_to_rejected_channel)
-                if TG_REJECTED_CHANNEL
+                if ReviewConfig.REJECTED_CHANNEL
                 else None
             ),
         )
@@ -371,7 +366,7 @@ async def send_custom_rejection_reason(
         user.full_name,
     )
 
-    if TG_REJECT_REASON_USER_LIMIT:
+    if ReviewConfig.REJECT_REASON_USER_LIMIT:
         # if the reviewer has not rejected the submission
         if reviewer_id not in submission_meta["reviewer"] or submission_meta[
             "reviewer"
@@ -466,7 +461,7 @@ async def retract_approved_submission(
     try:
         for message in sent_messages:
             await context.bot.deleteMessage(
-                chat_id=TG_PUBLISH_CHANNEL, message_id=message
+                chat_id=ReviewConfig.PUBLISH_CHANNEL, message_id=message
             )
         await query.answer("↩️ 已撤回")
         submission_meta["reviewer"][query.from_user.id][2] = "通过后撤回"
@@ -477,7 +472,7 @@ async def retract_approved_submission(
             reply_markup=inline_keyboard,
         )
         # send result to submitter
-        if TG_RETRACT_NOTIFY:
+        if ReviewConfig.RETRACT_NOTIFY:
             await send_result_to_submitter(
                 context,
                 submission_meta["submitter"][0],
@@ -504,6 +499,8 @@ def get_rejection_reason_text(option):
             option_text = REJECTION_REASON[option]
         elif option == len(REJECTION_REASON):  # JUST IGNORE IT!!
             option_text = "忽略此投稿"
+        else:
+            option_text = option
     elif option == ReviewChoice.REJECT_DUPLICATE:
         option_text = "已在频道发布过或已有人投稿过"
     else:
@@ -523,7 +520,7 @@ def get_submission_status(submission_meta):
     reject_noreason_num = review_options.count(ReviewChoice.REJECT)
     reject_reason_num = len(review_options) - approve_num - reject_noreason_num
 
-    if approve_num >= APPROVE_NUMBER_REQUIRED:
+    if approve_num >= ReviewConfig.APPROVE_NUMBER_REQUIRED:
         status = SubmissionStatus.APPROVED
     elif reject_reason_num > 0:
         # At least one reviewer has given rejection reason
@@ -536,7 +533,7 @@ def get_submission_status(submission_meta):
             ]:
                 rejection_reason = get_rejection_reason_text(review_option)
                 break
-    elif reject_noreason_num >= REJECT_NUMBER_REQUIRED:
+    elif reject_noreason_num >= ReviewConfig.REJECT_NUMBER_REQUIRED:
         status = SubmissionStatus.REJECTED_NO_REASON
     else:
         status = SubmissionStatus.PENDING
@@ -556,7 +553,8 @@ def generate_submission_meta_string(submission_meta):
     - 🟢 Approved as SFW by reviewer3.full_name (@reviewer3.username, reviewer3.id)
     Status: Approved as SFW
 
-    #ABI_VER_6 #USER_submitter.id #SUBMITTER_submitter.id #SUBMITTER_UNSIGNED #USER_reviewer1.id #REVIEWER_reviewer1.id #USER_reviewer2.id #REVIEWER_reviewer2.id #USER_reviewer3.id #REVIEWER_reviewer3.id #APPROVED #SFW
+    #ABI_VER_6 #USER_submitter.id #SUBMITTER_submitter.id #SUBMITTER_UNSIGNED #USER_reviewer1.id #REVIEWER_reviewer1.id #USER_reviewer2.id
+    #REVIEWER_reviewer2.id #USER_reviewer3.id #REVIEWER_reviewer3.id #APPROVED #SFW
     """
     # rejected submission string style:
     """
@@ -569,7 +567,8 @@ def generate_submission_meta_string(submission_meta):
     - 🔴 Rejected as 内容不够有趣 by reviewer3.full_name (@reviewer3.username, reviewer3.id)
     Status: Rejected as 内容不够有趣
 
-    #ABI_VER_6 #USER_submitter.id #SUBMITTER_submitter.id #SUBMITTER_SIGNED #REVIEWER_reviewer1.id #USER_reviewer2.id #REVIEWER_reviewer2.id #USER_reviewer3.id #REVIEWER_reviewer3.id #REJECTED
+    #ABI_VER_6 #USER_submitter.id #SUBMITTER_submitter.id #SUBMITTER_SIGNED #REVIEWER_reviewer1.id #USER_reviewer2.id #REVIEWER_reviewer2.id 
+    #USER_reviewer3.id #REVIEWER_reviewer3.id #REJECTED
     """
 
     # rejected but no reason chosen submission string style:
@@ -582,7 +581,8 @@ def generate_submission_meta_string(submission_meta):
     - 🔴 Rejected by reviewer2.full_name (@reviewer2.username, reviewer2.id)
     Status: Pending
 
-    #ABI_VER_6 #USER_submitter.id #SUBMITTER_submitter.id #SUBMITTER_UNSIGNED #USER_reviewer1.id #REVIEWER_reviewer1.id #USER_reviewer2.id #REVIEWER_reviewer2.id #PENDING
+    #ABI_VER_6 #USER_submitter.id #SUBMITTER_submitter.id #SUBMITTER_UNSIGNED #USER_reviewer1.id #REVIEWER_reviewer1.id #USER_reviewer2.id 
+    #REVIEWER_reviewer2.id #PENDING
     """
 
     # pending submission string style:

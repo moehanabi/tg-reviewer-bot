@@ -5,32 +5,13 @@ from telegram import (
     InputMediaPhoto,
     InputMediaVideo,
     LinkPreviewOptions,
-    ReplyParameters,
+    ReplyParameters, Bot,
 )
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from telegram.ext.filters import MessageFilter
 
-# get args from environment variables
-TG_TOKEN = os.environ.get("TG_TOKEN")
-TG_REVIEWER_GROUP = os.environ.get("TG_REVIEWER_GROUP")
-TG_PUBLISH_CHANNEL = os.environ.get("TG_PUBLISH_CHANNEL")
-TG_REJECTED_CHANNEL = os.environ.get("TG_REJECTED_CHANNEL")
-TG_BOT_USERNAME = os.environ.get("TG_BOT_USERNAME")
-TG_RETRACT_NOTIFY = os.getenv("TG_RETRACT_NOTIFY", "True") == "True"
-TG_BANNED_NOTIFY = os.getenv("TG_BANNED_NOTIFY", "True") == "True"
-TG_REJECT_REASON_USER_LIMIT = os.getenv("TG_REJECT_REASON_USER_LIMIT", "True") == "True"
-try:
-    APPROVE_NUMBER_REQUIRED = int(os.getenv("TG_APPROVE_NUMBER_REQUIRED", 2))
-except (TypeError, ValueError):
-    APPROVE_NUMBER_REQUIRED = 2
-try:
-    REJECT_NUMBER_REQUIRED = int(os.getenv("TG_REJECT_NUMBER_REQUIRED", 2))
-except (TypeError, ValueError):
-    REJECT_NUMBER_REQUIRED = 2
-REJECTION_REASON = os.environ.get("TG_REJECTION_REASON", "").split(":")
-TG_DB_URL = os.environ.get("TG_DB_URL", "")
-TG_SINGLE_MODE = os.getenv("TG_SINGLE_MODE", "True") == "True"
+from src.config import Config
 
 
 class PrefixFilter(MessageFilter):
@@ -45,12 +26,12 @@ class PrefixFilter(MessageFilter):
 
 
 async def send_group(
-    context: ContextTypes.DEFAULT_TYPE,
-    chat_id,
-    item_list,
-    type_list,
-    text="",
-    has_spoiler=False,
+        context: ContextTypes.DEFAULT_TYPE,
+        chat_id,
+        item_list,
+        type_list,
+        text="",
+        has_spoiler=False,
 ):
     sent_messages = []
 
@@ -88,7 +69,7 @@ async def send_group(
         )
 
     for i in range(0, len(media), 10):
-        portion = media[i : i + 10]
+        portion = media[i: i + 10]
         if len(portion) > 1:
             sent_messages.extend(
                 await context.bot.send_media_group(
@@ -152,14 +133,14 @@ async def send_group(
 
 
 async def send_submission(
-    context: ContextTypes.DEFAULT_TYPE,
-    chat_id,
-    media_id_list,
-    media_type_list,
-    documents_id_list,
-    document_type_list,
-    text="",
-    has_spoiler=False,
+        context: ContextTypes.DEFAULT_TYPE,
+        chat_id,
+        media_id_list,
+        media_type_list,
+        documents_id_list,
+        document_type_list,
+        text="",
+        has_spoiler=False,
 ):
     sent_messages = []
 
@@ -202,11 +183,11 @@ async def send_submission(
 
 
 async def send_result_to_submitter(
-    context,
-    submitter_id,
-    submit_message_id,
-    message,
-    inline_keyboard_markup=None,
+        context,
+        submitter_id,
+        submit_message_id,
+        message,
+        inline_keyboard_markup=None,
 ):
     try:
         await context.bot.send_message(
@@ -229,3 +210,10 @@ async def get_name_from_uid(context, user_id):
     except Exception as e:
         print(e)
         return "", ""
+
+
+async def get_username() -> str:
+    tg_bot = Bot(token=Config.BOT_TOKEN)
+    await tg_bot.initialize()
+    BOT_USERNAME = tg_bot.username
+    return BOT_USERNAME
