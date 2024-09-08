@@ -10,9 +10,10 @@ from telegram.ext import (
 )
 from telegram.helpers import escape_markdown
 
-from db_op import Banned_user, Submitter
-from review_utils import reply_review_message
-from utils import TG_BANNED_NOTIFY, TG_REVIEWER_GROUP, send_submission
+from src.config import ReviewConfig
+from src.database.db_op import Banned_user, Submitter
+from src.review_utils import reply_review_message
+from utils import send_submission
 
 # set const as the state of one user
 COLLECTING = range(1)
@@ -45,7 +46,7 @@ async def confirm_submission(
 
         submission_messages = await send_submission(
             context=context,
-            chat_id=TG_REVIEWER_GROUP,
+            chat_id=ReviewConfig.REVIEWER_GROUP,
             media_id_list=submission["media_id_list"],
             media_type_list=submission["media_type_list"],
             documents_id_list=submission["document_id_list"],
@@ -174,7 +175,7 @@ async def handle_new_submission(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ):
     if Banned_user.is_banned(update.effective_user.id):
-        if TG_BANNED_NOTIFY:
+        if ReviewConfig.BANNED_NOTIFY:
             await update.message.reply_text("你已被禁止投稿。")
         return ConversationHandler.END
 
