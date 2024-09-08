@@ -6,7 +6,8 @@ from telegram.ext import ContextTypes
 from telegram.helpers import escape_markdown
 
 from src.config import ReviewConfig
-from src.database.db_op import Reviewer, Submitter
+import src.database.reviewer as Reviewer
+import src.database.submitter as Submitter
 
 
 async def submitter_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):

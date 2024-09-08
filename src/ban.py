@@ -3,7 +3,7 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from telegram.helpers import escape_markdown
 
-from src.database.db_op import Banned_user
+import src.database.ban_user as Banned_user
 from src.utils import get_name_from_uid
 
 
@@ -24,7 +24,7 @@ async def ban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             f"{user} 先前已被屏蔽\n"
             + await get_banned_user_info(
-                context, Banned_user.get_banned_user(user)
+                context, ban_user.get_banned_user(user)
             ),
             parse_mode=ParseMode.MARKDOWN_V2,
         )

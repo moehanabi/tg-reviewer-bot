@@ -8,7 +8,8 @@ from telegram.ext import ContextTypes
 from telegram.helpers import escape_markdown
 
 from src.config import ReviewConfig
-from src.database.db_op import Reviewer, Submitter
+import src.database.reviewer as Reviewer
+import src.database.submitter as Submitter
 from src.utils import (
     send_result_to_submitter,
     send_submission,

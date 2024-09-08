@@ -9,7 +9,7 @@ from telegram.ext import (
 from telegram.helpers import escape_markdown
 
 from src.config import ReviewConfig
-from src.database.db_op import Submitter
+import src.database.submitter as Submitter
 from src.review_utils import reply_review_message
 from src.utils import send_submission
 

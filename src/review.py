@@ -6,7 +6,8 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
 from src.config import ReviewConfig
-from src.database.db_op import Reviewer, Submitter
+import src.database.reviewer as Reviewer
+import src.database.submitter as Submitter
 from src.review_utils import (
     ReviewChoice,
     generate_submission_meta_string,
