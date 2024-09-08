@@ -1,12 +1,4 @@
-import os
-
-from telegram import (
-    InputMediaDocument,
-    InputMediaPhoto,
-    InputMediaVideo,
-    LinkPreviewOptions,
-    ReplyParameters, Bot,
-)
+from telegram import (Bot, InputMediaDocument, InputMediaPhoto, InputMediaVideo, LinkPreviewOptions, ReplyParameters)
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from telegram.ext.filters import MessageFilter
@@ -26,12 +18,12 @@ class PrefixFilter(MessageFilter):
 
 
 async def send_group(
-        context: ContextTypes.DEFAULT_TYPE,
-        chat_id,
-        item_list,
-        type_list,
-        text="",
-        has_spoiler=False,
+    context: ContextTypes.DEFAULT_TYPE,
+    chat_id,
+    item_list,
+    type_list,
+    text="",
+    has_spoiler=False,
 ):
     sent_messages = []
 
@@ -42,13 +34,9 @@ async def send_group(
     for i in range(len(item_list)):
         match type_list[i]:
             case "photo":
-                media.append(
-                    InputMediaPhoto(item_list[i], has_spoiler=has_spoiler)
-                )
+                media.append(InputMediaPhoto(item_list[i], has_spoiler=has_spoiler))
             case "video":
-                media.append(
-                    InputMediaVideo(item_list[i], has_spoiler=has_spoiler)
-                )
+                media.append(InputMediaVideo(item_list[i], has_spoiler=has_spoiler))
             case "document":
                 media.append(InputMediaDocument(item_list[i]))
             case "sticker":
@@ -69,7 +57,7 @@ async def send_group(
         )
 
     for i in range(0, len(media), 10):
-        portion = media[i: i + 10]
+        portion = media[i : i + 10]
         if len(portion) > 1:
             sent_messages.extend(
                 await context.bot.send_media_group(
@@ -133,14 +121,14 @@ async def send_group(
 
 
 async def send_submission(
-        context: ContextTypes.DEFAULT_TYPE,
-        chat_id,
-        media_id_list,
-        media_type_list,
-        documents_id_list,
-        document_type_list,
-        text="",
-        has_spoiler=False,
+    context: ContextTypes.DEFAULT_TYPE,
+    chat_id,
+    media_id_list,
+    media_type_list,
+    documents_id_list,
+    document_type_list,
+    text="",
+    has_spoiler=False,
 ):
     sent_messages = []
 
@@ -183,11 +171,11 @@ async def send_submission(
 
 
 async def send_result_to_submitter(
-        context,
-        submitter_id,
-        submit_message_id,
-        message,
-        inline_keyboard_markup=None,
+    context,
+    submitter_id,
+    submit_message_id,
+    message,
+    inline_keyboard_markup=None,
 ):
     try:
         await context.bot.send_message(

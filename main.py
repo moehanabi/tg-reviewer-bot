@@ -1,7 +1,6 @@
 import asyncio
 import logging
 
-from telegram import Bot
 from telegram.ext import (
     ApplicationBuilder,
     CallbackQueryHandler,
@@ -68,9 +67,7 @@ if __name__ == "__main__":
                 reject_submission,
                 pattern=f"^({ReviewChoice.REJECT}|{ReviewChoice.REJECT_DUPLICATE})",
             ),
-            CallbackQueryHandler(
-                query_decision, pattern=f"^{ReviewChoice.QUERY}"
-            ),
+            CallbackQueryHandler(query_decision, pattern=f"^{ReviewChoice.QUERY}"),
             CallbackQueryHandler(
                 withdraw_decision, pattern=f"^{ReviewChoice.WITHDRAW}"
             ),
@@ -83,8 +80,7 @@ if __name__ == "__main__":
                 filters.REPLY
                 & filters.Chat(chat_id=int(ReviewConfig.REVIEWER_GROUP))
                 & (
-                        PrefixFilter("/append ")
-                        | PrefixFilter(f"@{BOT_USERNAME} /append ")
+                    PrefixFilter("/append ") | PrefixFilter(f"@{BOT_USERNAME} /append ")
                 ),
                 append_message,
             ),
@@ -92,8 +88,8 @@ if __name__ == "__main__":
                 filters.REPLY
                 & filters.Chat(chat_id=int(ReviewConfig.REVIEWER_GROUP))
                 & (
-                        PrefixFilter("/remove_append ")
-                        | PrefixFilter(f"@{BOT_USERNAME} /remove_append ")
+                    PrefixFilter("/remove_append ")
+                    | PrefixFilter(f"@{BOT_USERNAME} /remove_append ")
                 ),
                 remove_append_message,
             ),
@@ -101,8 +97,8 @@ if __name__ == "__main__":
                 filters.REPLY
                 & filters.Chat(chat_id=int(ReviewConfig.REVIEWER_GROUP))
                 & (
-                        PrefixFilter("/comment ")
-                        | PrefixFilter(f"@{BOT_USERNAME} /comment ")
+                    PrefixFilter("/comment ")
+                    | PrefixFilter(f"@{BOT_USERNAME} /comment ")
                 ),
                 comment_message,
             ),
@@ -110,25 +106,27 @@ if __name__ == "__main__":
                 filters.REPLY
                 & filters.Chat(chat_id=int(ReviewConfig.REVIEWER_GROUP))
                 & (
-                        PrefixFilter("/reject ")
-                        | PrefixFilter(f"@{BOT_USERNAME} /reject ")
+                    PrefixFilter("/reject ") | PrefixFilter(f"@{BOT_USERNAME} /reject ")
                 ),
                 send_custom_rejection_reason,
             ),
             CommandHandler(
                 "ban",
                 ban_user,
-                filters=~filters.UpdateType.EDITED_MESSAGE & filters.Chat(chat_id=int(ReviewConfig.REVIEWER_GROUP)),
+                filters=~filters.UpdateType.EDITED_MESSAGE
+                & filters.Chat(chat_id=int(ReviewConfig.REVIEWER_GROUP)),
             ),
             CommandHandler(
                 "unban",
                 unban_user,
-                filters=~filters.UpdateType.EDITED_MESSAGE & filters.Chat(chat_id=int(ReviewConfig.REVIEWER_GROUP)),
+                filters=~filters.UpdateType.EDITED_MESSAGE
+                & filters.Chat(chat_id=int(ReviewConfig.REVIEWER_GROUP)),
             ),
             CommandHandler(
                 "listban",
                 list_banned_users,
-                filters=~filters.UpdateType.EDITED_MESSAGE & filters.Chat(chat_id=int(ReviewConfig.REVIEWER_GROUP)),
+                filters=~filters.UpdateType.EDITED_MESSAGE
+                & filters.Chat(chat_id=int(ReviewConfig.REVIEWER_GROUP)),
             ),
             CommandHandler(
                 "stats",
@@ -138,7 +136,8 @@ if __name__ == "__main__":
             CommandHandler(
                 "reviewer_stats",
                 reviewer_stats,
-                filters=~filters.UpdateType.EDITED_MESSAGE & filters.Chat(chat_id=int(ReviewConfig.REVIEWER_GROUP)),
+                filters=~filters.UpdateType.EDITED_MESSAGE
+                & filters.Chat(chat_id=int(ReviewConfig.REVIEWER_GROUP)),
             ),
         ]
     )
