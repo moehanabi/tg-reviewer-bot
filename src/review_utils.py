@@ -526,7 +526,7 @@ def generate_submission_meta_string(submission_meta):
     """
     ✅ An approved submission
 
-    SubmitterModel: submitter.full_name (@submitter.username, submitter.id)
+    Submitter: submitter.full_name (@submitter.username, submitter.id)
     Reviewers:
     - 🔴 Rejected by reviewer1.full_name (@reviewer1.username, reviewer1.id)
     - 🟢 Approved as SFW by reviewer2.full_name (@reviewer2.username, reviewer2.id)
@@ -540,7 +540,7 @@ def generate_submission_meta_string(submission_meta):
     """
     ❌ A rejected submission
 
-    SubmitterModel: submitter.full_name (@submitter.username, submitter.id)
+    Submitter: submitter.full_name (@submitter.username, submitter.id)
     Reviewers: 
     - 🟢 Approved as SFW by reviewer1.full_name (@reviewer1.username, reviewer1.id)
     - 🔴 Rejected by reviewer2.full_name (@reviewer2.username, reviewer2.id)
@@ -555,7 +555,7 @@ def generate_submission_meta_string(submission_meta):
     """
     ❔ A pending review submission
 
-    SubmitterModel: submitter.full_name (@submitter.username, submitter.id)
+    Submitter: submitter.full_name (@submitter.username, submitter.id)
     Reviewers: 
     - 🔴 Rejected by reviewer1.full_name (@reviewer1.username, reviewer1.id)
     - 🔴 Rejected by reviewer2.full_name (@reviewer2.username, reviewer2.id)
@@ -569,8 +569,8 @@ def generate_submission_meta_string(submission_meta):
     """
     ❔ A pending review submission
 
-    SubmitterModel: submitter.full_name (@submitter.username, submitter.id)
-    ReviewerModel: Hidden until the final results of the review vote
+    Submitter: submitter.full_name (@submitter.username, submitter.id)
+    Reviewer: Hidden until the final results of the review vote
     Status: Pending
 
     #ABI_VER_6 #USER_submitter.id #SUBMITTER_submitter.id #SUBMITTER_UNSIGNED #PENDING
