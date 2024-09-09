@@ -22,7 +22,7 @@ async def count_modify(user_id: int, column_name: str, num: Optional[int] = 1) -
                 user_data = ReviewerModel(user_id=user_id, approve_count=0, reject_count=0, approve_but_rejected_count=0,
                                           reject_but_approved_count=0, )
             setattr(user_data, column_name, getattr(user_data, column_name, 0) + num)
-            session.merge(user_data)
+            await session.merge(user_data)
         return user_data
 
 

@@ -56,5 +56,5 @@ async def ban_user(user_data: BannedUserModel) -> BannedUserModel:
     """
     async with SessionFactory as session:
         async with session.begin():
-            session.merge(user_data)
+            await session.merge(user_data)
         return user_data
