@@ -55,7 +55,7 @@ async def approve_submission(
         action,
     ]
     # increase reviewer approve count
-    Reviewer.count_increase(reviewer_id, "approve_count")
+    await Reviewer.count_modify(reviewer_id, "approve_count")
     # get options from all reviewers
     review_options = [
         reviewer[2] for reviewer in submission_meta["reviewer"].values()
@@ -78,14 +78,14 @@ async def approve_submission(
     # else if the submission has been approved by enough reviewers
     await query.answer("✅ 投票成功，此条投稿已通过")
     # increase submitter approved count
-    Submitter.count_increase(submission_meta["submitter"][0], "approved_count")
+    await Submitter.count_modify(submission_meta["submitter"][0], "approved_count")
     # increase reviewer count
     for reviewer_id in submission_meta["reviewer"]:
         if submission_meta["reviewer"][reviewer_id][2] not in [
             ReviewChoice.SFW,
             ReviewChoice.NSFW,
         ]:
-            Reviewer.count_increase(reviewer_id, "reject_but_approved_count")
+            await Reviewer.count_modify(reviewer_id, "reject_but_approved_count")
     # then send this submission to the publish channel
     # if the submission is nsfw
     skip_all = None
@@ -199,7 +199,7 @@ async def reject_submission(
     # if REJECT_DUPLICATE, only one reviewer is enough
     if action == ReviewChoice.REJECT_DUPLICATE:
         # if the reviewer has already approved or rejected the submission, remove the previous decision
-        submission_meta, _ = remove_decision(submission_meta, reviewer_id)
+        submission_meta, _ = await remove_decision(submission_meta, reviewer_id)
         submission_meta["reviewer"][reviewer_id] = [
             reviewer_username,
             reviewer_fullname,
@@ -218,17 +218,17 @@ async def reject_submission(
         )
 
         # increase submitter rejected count
-        Submitter.count_increase(
+        await Submitter.count_modify(
             submission_meta["submitter"][0], "rejected_count"
         )
         # increase reviewer count
-        Reviewer.count_increase(reviewer_id, "reject_count")
+        await Reviewer.count_modify(reviewer_id, "reject_count")
         for reviewer_id in submission_meta["reviewer"]:
             if submission_meta["reviewer"][reviewer_id][2] in [
                 ReviewChoice.SFW,
                 ReviewChoice.NSFW,
             ]:
-                Reviewer.count_increase(
+                await Reviewer.count_modify(
                     reviewer_id, "approve_but_rejected_count"
                 )
         return
@@ -243,7 +243,7 @@ async def reject_submission(
         action,
     ]
     # increase reviewer reject count
-    Reviewer.count_increase(reviewer_id, "reject_count")
+    await Reviewer.count_modify(reviewer_id, "reject_count")
     # get options from all reviewers
     review_options = [
         reviewer[2] for reviewer in submission_meta["reviewer"].values()
@@ -262,14 +262,14 @@ async def reject_submission(
     # else if the submission has been rejected by enough reviewers
     await query.answer("✅ 投票成功，此条投稿已被拒绝")
     # increase submitter rejected count
-    Submitter.count_increase(submission_meta["submitter"][0], "rejected_count")
+    await Submitter.count_modify(submission_meta["submitter"][0], "rejected_count")
     # increase reviewer count
     for reviewer_id in submission_meta["reviewer"]:
         if submission_meta["reviewer"][reviewer_id][2] in [
             ReviewChoice.SFW,
             ReviewChoice.NSFW,
         ]:
-            Reviewer.count_increase(reviewer_id, "approve_but_rejected_count")
+            await Reviewer.count_modify(reviewer_id, "approve_but_rejected_count")
     # send the rejection reason options inline keyboard
     # show inline keyboard in 2 cols
     inline_keyboard_content = []
@@ -338,7 +338,7 @@ async def withdraw_decision(
         )
     )
 
-    submission_meta, removed = remove_decision(submission_meta, reviewer)
+    submission_meta, removed = await remove_decision(submission_meta, reviewer)
     if removed:
         await review_message.edit_text(
             text=generate_submission_meta_string(submission_meta),

@@ -24,3 +24,16 @@ async def count_modify(user_id: int, column_name: str, num: Optional[int] = 1) -
             setattr(user_data, column_name, getattr(user_data, column_name, 0) + num)
             session.merge(user_data)
         return user_data
+
+
+async def get_reviewer(user_id: int) -> ReviewerModel | None:
+    """
+    Retrieve a reviewer by user ID.
+    Args:
+        user_id (int): The ID of the user to retrieve.
+    Returns:
+        ReviewerModel: The retrieved Reviewer object.
+    """
+    async with SessionFactory() as session:
+        user_data = await session.execute(select(ReviewerModel).filter_by(user_id=user_id))
+        return user_data.scalar_one_or_none()

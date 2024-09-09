@@ -73,7 +73,7 @@ async def confirm_submission(
         await query.edit_message_text(text="投稿成功")
 
     del message_groups[user.id]
-    Submitter.count_increase(user.id, "submission_count")
+    await Submitter.count_modify(user.id, "submission_count")
     return ConversationHandler.END
 
 
@@ -113,6 +113,7 @@ async def collect_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
         submission["document_type_list"].append("document")
     if submission["first_message_id"] is None:
         submission["first_message_id"] = message.message_id
+    forward_name = ""
     if message.forward_origin is not None:
         forward_string = "\n\n_from_ "
         match message.forward_origin.type:

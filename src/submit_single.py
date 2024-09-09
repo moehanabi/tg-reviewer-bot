@@ -191,7 +191,7 @@ async def confirm_submission(
         await reply_review_message(submission_messages[0], submission_meta)
         await query.edit_message_text(text="投稿成功")
 
-        Submitter.count_increase(user.id, "submission_count")
+        await Submitter.count_modify(user.id, "submission_count")
 
 
 submission_handler = MessageHandler(

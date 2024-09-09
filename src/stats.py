@@ -17,7 +17,7 @@ async def submitter_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("请提供用户ID")
             return
         userid = context.args[0]
-    submitter_info = Submitter.get_submitter(userid)
+    submitter_info = await Submitter.get_submitter(userid)
     if not submitter_info or not submitter_info.submission_count:
         await update.message.reply_text("还没有投稿过任何内容")
         return
@@ -35,7 +35,7 @@ async def reviewer_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("请提供审稿人 ID")
         return
     reviewer_id = context.args[0]
-    reviewer_info = Reviewer.get_reviewer(reviewer_id)
+    reviewer_info = await Reviewer.get_reviewer(reviewer_id)
     if not reviewer_info:
         await update.message.reply_text("还没有审核过任何内容")
         return
