@@ -12,7 +12,7 @@ class Base(AsyncAttrs, DeclarativeBase):
     pass
 
 
-class Reviewer(Base):
+class ReviewerModel(Base):
     __tablename__ = "reviewers"  # 审核者数据
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, comment='用户id')
     approve_count: Mapped[int] = mapped_column(Integer, comment='通过稿件数量')
@@ -24,7 +24,7 @@ class Reviewer(Base):
     )
 
 
-class Submitter(Base):
+class SubmitterModel(Base):
     __tablename__ = "submitters"  # 投稿者数据
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, comment='用户id')
     submission_count: Mapped[int] = mapped_column(Integer, comment='投稿数量')
@@ -32,7 +32,7 @@ class Submitter(Base):
     rejected_count: Mapped[int] = mapped_column(Integer, comment='拒绝数量')
 
 
-class Banned_user(Base):
+class BannedUserModel(Base):
     __tablename__ = "banned_users"
     user_id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True, comment='用户id')
     user_name: Mapped[str] = mapped_column(String(50), nullable=True, comment='用户username')
