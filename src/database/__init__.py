@@ -51,5 +51,5 @@ if not db_path.exists():
     with sync_engine.begin() as connection:
         Base.metadata.create_all(sync_engine)
         connection.execute(text('PRAGMA journal_mode = WAL'))  # 启用 WAL
-ENGINE = create_async_engine(f'sqlite+aiosqlite:///{db_path}', echo=False)
+ENGINE = create_async_engine(f'sqlite+aiosqlite:///{db_path}', echo=Config.SQLALCHEMY_LOG)
 SessionFactory = async_sessionmaker(bind=ENGINE, expire_on_commit=False)

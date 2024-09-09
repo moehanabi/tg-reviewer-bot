@@ -31,7 +31,7 @@ from src.utils import PrefixFilter, get_username
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.INFO,
+    level=Config.LOG_LEVE,
 )
 
 if __name__ == "__main__":
