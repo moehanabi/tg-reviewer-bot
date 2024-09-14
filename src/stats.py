@@ -5,18 +5,19 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from telegram.helpers import escape_markdown
 
-from db_op import Reviewer, Submitter
-from utils import TG_REVIEWER_GROUP
+from src.config import ReviewConfig
+import src.database.reviewer as Reviewer
+import src.database.submitter as Submitter
 
 
 async def submitter_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     userid = update.effective_user.id
-    if str(update.effective_chat.id) == TG_REVIEWER_GROUP:
+    if str(update.effective_chat.id) == ReviewConfig.REVIEWER_GROUP:
         if not context.args:
             await update.message.reply_text("请提供用户ID")
             return
         userid = context.args[0]
-    submitter_info = Submitter.get_submitter(userid)
+    submitter_info = await Submitter.get_submitter(userid)
     if not submitter_info or not submitter_info.submission_count:
         await update.message.reply_text("还没有投稿过任何内容")
         return
@@ -34,7 +35,7 @@ async def reviewer_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("请提供审稿人 ID")
         return
     reviewer_id = context.args[0]
-    reviewer_info = Reviewer.get_reviewer(reviewer_id)
+    reviewer_info = await Reviewer.get_reviewer(reviewer_id)
     if not reviewer_info:
         await update.message.reply_text("还没有审核过任何内容")
         return

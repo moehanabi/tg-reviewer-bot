@@ -10,9 +10,11 @@ from telegram.ext import (
 )
 from telegram.helpers import escape_markdown
 
-from db_op import Banned_user, Submitter
-from review_utils import reply_review_message
-from utils import TG_BANNED_NOTIFY, TG_REVIEWER_GROUP, send_submission
+from src.config import ReviewConfig
+import src.database.ban_user as Banned_user
+import src.database.submitter as Submitter
+from src.review_utils import reply_review_message
+from utils import send_submission
 
 # set const as the state of one user
 COLLECTING = range(1)
@@ -45,7 +47,7 @@ async def confirm_submission(
 
         submission_messages = await send_submission(
             context=context,
-            chat_id=TG_REVIEWER_GROUP,
+            chat_id=ReviewConfig.REVIEWER_GROUP,
             media_id_list=submission["media_id_list"],
             media_type_list=submission["media_type_list"],
             documents_id_list=submission["document_id_list"],
@@ -71,7 +73,7 @@ async def confirm_submission(
         await query.edit_message_text(text="投稿成功")
 
     del message_groups[user.id]
-    Submitter.count_increase(user.id, "submission_count")
+    await Submitter.count_modify(user.id, "submission_count")
     return ConversationHandler.END
 
 
@@ -111,6 +113,7 @@ async def collect_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
         submission["document_type_list"].append("document")
     if submission["first_message_id"] is None:
         submission["first_message_id"] = message.message_id
+    forward_name = ""
     if message.forward_origin is not None:
         forward_string = "\n\n_from_ "
         match message.forward_origin.type:
@@ -174,7 +177,7 @@ async def handle_new_submission(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ):
     if Banned_user.is_banned(update.effective_user.id):
-        if TG_BANNED_NOTIFY:
+        if ReviewConfig.BANNED_NOTIFY:
             await update.message.reply_text("你已被禁止投稿。")
         return ConversationHandler.END
 
