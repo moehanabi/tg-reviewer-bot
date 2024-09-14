@@ -44,6 +44,7 @@ if __name__ == "__main__":
         .connect_timeout(60)
         .get_updates_read_timeout(60)
         .read_timeout(60)
+        .concurrent_updates(True)
         .get_updates_write_timeout(60)
         .write_timeout(60)
         .build()

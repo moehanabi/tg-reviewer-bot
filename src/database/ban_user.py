@@ -12,7 +12,9 @@ async def is_banned(user_id: int) -> BannedUserModel | None:
         BannedUserModel: The Banned_user object if the user is banned, otherwise None.
     """
     async with SessionFactory as session:
-        user_data = await session.execute(select(BannedUserModel).filter_by(user_id=user_id))
+        user_data = await session.execute(
+            select(BannedUserModel).filter_by(user_id=user_id)
+        )
         return user_data.scalar_one_or_none()
 
 
