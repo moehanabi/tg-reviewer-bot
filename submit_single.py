@@ -10,14 +10,19 @@ from telegram.ext import (
 )
 from telegram.helpers import escape_markdown
 
-from db_op import Submitter
+from db_op import Banned_user, Submitter
 from review_utils import reply_review_message
-from utils import TG_REVIEWER_GROUP, send_submission
+from utils import TG_BANNED_NOTIFY, TG_REVIEWER_GROUP, send_submission
 
 media_groups = {}
 
 
 async def reply_option(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if Banned_user.is_banned(update.effective_user.id):
+        if TG_BANNED_NOTIFY:
+            await update.message.reply_text("你已被禁止投稿。")
+        return
+
     message = update.message
 
     if message.media_group_id:
