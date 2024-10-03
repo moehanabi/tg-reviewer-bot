@@ -60,14 +60,16 @@ async def confirm_submission(
                 submission["first_message_id"],
             ],
             "reviewer": {},
-            "text": submission['text'],
+            "text": submission["text"],
             "media_id_list": submission["media_id_list"],
             "media_type_list": submission["media_type_list"],
             "documents_id_list": submission["document_id_list"],
             "document_type_list": submission["document_type_list"],
             "append": {},
         }
-        await reply_review_message(submission_messages[0], submission_meta)
+        await reply_review_message(
+            submission_messages[0], submission_meta, context
+        )
         await query.edit_message_text(text="投稿成功")
 
     del message_groups[user.id]
@@ -102,7 +104,7 @@ async def collect_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if message.sticker:
         submission["media_id_list"].append(message.sticker.file_id)
         submission["media_type_list"].append("sticker")
-    if message.animation:   # GIF
+    if message.animation:  # GIF
         submission["media_id_list"].append(message.animation.file_id)
         submission["media_type_list"].append("animation")
     # elif because gif is also a document but can not be sent as a group

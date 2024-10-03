@@ -4,6 +4,7 @@ from textwrap import dedent
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.constants import ParseMode
+from telegram.error import BadRequest
 from telegram.ext import ContextTypes
 from telegram.helpers import escape_markdown
 
@@ -57,7 +58,9 @@ class SubmissionStatus:
     REJECTED_NO_REASON = 3
 
 
-async def reply_review_message(first_submission_message, submission_meta):
+async def reply_review_message(
+    first_submission_message, submission_meta, context
+):
     # reply the first submission_message and show the inline keyboard to let the reviewers to decide whether to publish it
     inline_keyboard = InlineKeyboardMarkup(
         [
@@ -110,11 +113,24 @@ async def reply_review_message(first_submission_message, submission_meta):
         ]
     )
 
-    await first_submission_message.reply_text(
-        generate_submission_meta_string(submission_meta),
-        parse_mode=ParseMode.MARKDOWN_V2,
-        reply_markup=inline_keyboard,
-    )
+    try:
+        await first_submission_message.reply_text(
+            generate_submission_meta_string(submission_meta),
+            parse_mode=ParseMode.MARKDOWN_V2,
+            reply_markup=inline_keyboard,
+        )
+    except BadRequest as br:
+        if br.message.startswith("Entities_too_long"):
+            await first_submission_message.reply_text(
+                "稿件过长，已通知投稿人。",
+                parse_mode=ParseMode.MARKDOWN_V2,
+            )
+            await send_result_to_submitter(
+                context,
+                submission_meta["submitter"][0],
+                submission_meta["submitter"][3],
+                f"😢 很抱歉，投稿过长无法发送，请考虑缩短文字/分段投稿或者放弃投稿。",
+            )
 
 
 async def reject_reason(update: Update, context: ContextTypes.DEFAULT_TYPE):
