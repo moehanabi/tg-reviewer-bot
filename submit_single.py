@@ -81,6 +81,11 @@ async def confirm_submission(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ):
     query = update.callback_query
+    await query.edit_message_text(
+        text="投稿中，请稍等，*请勿重复点按*。\n若 10 秒后没有变化请再考虑重新投递。",
+        reply_markup=query.message.reply_markup,
+        parse_mode=ParseMode.MARKDOWN_V2,
+    )
     # CallbackQueries need to be answered, even if no notification to the user is needed
     # Some clients may have trouble otherwise. See https://core.telegram.org/bots/api#callbackquery
     await query.answer()
