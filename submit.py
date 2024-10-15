@@ -75,7 +75,9 @@ async def confirm_submission(
         await reply_review_message(
             submission_messages[0], submission_meta, context
         )
-        await query.edit_message_text(text="投稿成功")
+        await query.edit_message_text(
+            text="❤️ 投稿成功，阿里嘎多！我们会在稍后通知您审核结果。"
+        )
 
     del message_groups[user.id]
     Submitter.count_increase(user.id, "submission_count")
