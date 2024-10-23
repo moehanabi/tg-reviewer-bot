@@ -121,8 +121,19 @@ async def reply_review_message(
         )
     except BadRequest as br:
         if br.message.startswith("Entities_too_long"):
+            submitter_id, submitter_username, submitter_fullname, _ = (
+                submission_meta["submitter"]
+            )
             await first_submission_message.reply_text(
-                "稿件过长，已通知投稿人。",
+                escape_markdown(
+                    f"""\
+❌ 稿件过长，已通知投稿人。
+
+投稿人：{submitter_fullname} ({f'@{submitter_username}, ' if submitter_username else ''}{submitter_id})
+
+#USER_{submitter_id} #SUBMITTER_{submitter_id} #REJECTED""",
+                    version=2,
+                ),
                 parse_mode=ParseMode.MARKDOWN_V2,
             )
             await send_result_to_submitter(
