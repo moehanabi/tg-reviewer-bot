@@ -1,3 +1,5 @@
+import time
+
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.constants import MessageOriginType, ParseMode
 from telegram.ext import (
@@ -12,24 +14,26 @@ from telegram.helpers import escape_markdown
 
 from db_op import Banned_user, Submitter
 from review_utils import reply_review_message
-from utils import TG_BANNED_NOTIFY, TG_REVIEWER_GROUP, send_submission
+from utils import (
+    TG_BANNED_NOTIFY,
+    TG_REVIEWER_GROUP,
+    LRUCache,
+    send_result_to_submitter,
+    send_submission,
+)
 
 # set const as the state of one user
 COLLECTING = range(1)
 
 # set a dict to store the message from different users, the key is the user_id
 message_groups = {}
+submission_timestamp = LRUCache(20)
 
 
 async def confirm_submission(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ):
     query = update.callback_query
-    await query.edit_message_text(
-        text="投稿中，请稍等，*请勿重复点按*。\n若 10 秒后没有变化请再考虑重新投递。",
-        reply_markup=query.message.reply_markup,
-        parse_mode=ParseMode.MARKDOWN_V2,
-    )
     # CallbackQueries need to be answered, even if no notification to the user is needed
     # Some clients may have trouble otherwise. See https://core.telegram.org/bots/api#callbackquery
     await query.answer()
@@ -40,6 +44,24 @@ async def confirm_submission(
     if query.data.startswith("cancel"):
         await query.edit_message_text(text="投稿已取消")
     elif query.data.startswith(("anonymous", "realname")):
+        submission_id = int(query.data.split("#")[-1])
+        last_submission_time = submission_timestamp.get(submission_id)
+        if (
+            last_submission_time != -1
+            and int(time.time()) - last_submission_time < 10
+        ):
+            try:
+                await query.edit_message_text(
+                    text="请勿重复点按。\n若 10 秒后没有变化请再考虑重新投递。",
+                    reply_markup=query.message.reply_markup,
+                    parse_mode=ParseMode.MARKDOWN_V2,
+                )
+                return
+            except:
+                return
+        else:
+            submission_timestamp.put(submission_id, int(time.time()))
+
         if query.data.startswith("realname"):
             sign_string = f"_via_ [{escape_markdown(user.full_name,version=2,)}](tg://user?id={user.id})"
             # if the last line is a forward message, put in the same line
@@ -75,8 +97,12 @@ async def confirm_submission(
         await reply_review_message(
             submission_messages[0], submission_meta, context
         )
-        await query.edit_message_text(
-            text="❤️ 投稿成功，阿里嘎多！我们会在稍后通知您审核结果。"
+        await query.delete_message()
+        await send_result_to_submitter(
+            context,
+            user.id,
+            submission["first_message_id"],
+            "❤️ 投稿成功，阿里嘎多！我们会在稍后通知您审核结果。",
         )
 
     del message_groups[user.id]
@@ -165,8 +191,12 @@ async def collect_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # show options as an inline keyboard
     keyboard = [
         [
-            InlineKeyboardButton("实名投稿", callback_data=f"realname"),
-            InlineKeyboardButton("匿名投稿", callback_data=f"anonymous"),
+            InlineKeyboardButton(
+                "署名投稿", callback_data=f"realname#{submission["first_message_id"]}"
+            ),
+            InlineKeyboardButton(
+                "匿名投稿", callback_data=f"anonymous#{submission["first_message_id"]}"
+            ),
         ],
         [InlineKeyboardButton("取消投稿", callback_data="cancel")],
     ]
