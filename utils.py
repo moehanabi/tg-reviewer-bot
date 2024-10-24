@@ -20,7 +20,9 @@ TG_REJECTED_CHANNEL = os.environ.get("TG_REJECTED_CHANNEL")
 TG_BOT_USERNAME = os.environ.get("TG_BOT_USERNAME")
 TG_RETRACT_NOTIFY = os.getenv("TG_RETRACT_NOTIFY", "True") == "True"
 TG_BANNED_NOTIFY = os.getenv("TG_BANNED_NOTIFY", "True") == "True"
-TG_REJECT_REASON_USER_LIMIT = os.getenv("TG_REJECT_REASON_USER_LIMIT", "True") == "True"
+TG_REJECT_REASON_USER_LIMIT = (
+    os.getenv("TG_REJECT_REASON_USER_LIMIT", "True") == "True"
+)
 try:
     APPROVE_NUMBER_REQUIRED = int(os.getenv("TG_APPROVE_NUMBER_REQUIRED", 2))
 except (TypeError, ValueError):
@@ -163,6 +165,9 @@ async def send_submission(
     has_spoiler=False,
 ):
     sent_messages = []
+
+    if has_spoiler:
+        text = f"||{text.replace('||', '')}||"
 
     # no media or documents, just send text
     if not media_id_list and not documents_id_list:
