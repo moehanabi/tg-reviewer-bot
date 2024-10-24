@@ -32,6 +32,7 @@ except (TypeError, ValueError):
 REJECTION_REASON = os.environ.get("TG_REJECTION_REASON", "").split(":")
 TG_DB_URL = os.environ.get("TG_DB_URL", "")
 TG_SINGLE_MODE = os.getenv("TG_SINGLE_MODE", "True") == "True"
+TG_TEXT_SPOILER = os.getenv("TG_TEXT_SPOILER", "True") == "True"
 
 
 class PrefixFilter(MessageFilter):
@@ -163,6 +164,9 @@ async def send_submission(
     has_spoiler=False,
 ):
     sent_messages = []
+
+    if TG_TEXT_SPOILER and has_spoiler:
+        text = f"||{text.replace('||', '')}||"
 
     # no media or documents, just send text
     if not media_id_list and not documents_id_list:
