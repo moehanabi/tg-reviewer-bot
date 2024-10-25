@@ -15,7 +15,7 @@ from telegram.ext.filters import MessageFilter
 # get args from environment virables
 TG_TOKEN = os.environ.get("TG_TOKEN")
 TG_REVIEWER_GROUP = os.environ.get("TG_REVIEWER_GROUP")
-TG_PUBLISH_CHANNEL = os.environ.get("TG_PUBLISH_CHANNEL")
+TG_PUBLISH_CHANNEL = os.environ.get("TG_PUBLISH_CHANNEL").split(":")
 TG_REJECTED_CHANNEL = os.environ.get("TG_REJECTED_CHANNEL")
 TG_BOT_USERNAME = os.environ.get("TG_BOT_USERNAME")
 TG_RETRACT_NOTIFY = os.getenv("TG_RETRACT_NOTIFY", "True") == "True"

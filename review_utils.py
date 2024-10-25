@@ -480,10 +480,15 @@ async def retract_approved_submission(
             review_message.text_markdown_v2_urled.split("/")[-1][:-1]
         )
     )
-    sent_messages = query.data.split(".", 1)[-1].split(",")
     if query.from_user.id not in submission_meta["reviewer"]:
         await query.answer("😂 你没有投票")
         return
+    retract_message_ids = query.data.split(".", 1)[-1]
+    retract_message_ids = {
+        publish_channel: [int(msg_id) for msg_id in message_ids_str.split(",")]
+        for part in retract_message_ids.split(";")
+        for publish_channel, message_ids_str in [part.split(":")]
+    }
     if submission_meta["reviewer"][query.from_user.id][2] not in [
         ReviewChoice.SFW,
         ReviewChoice.NSFW,
@@ -491,9 +496,9 @@ async def retract_approved_submission(
         await query.answer("😂 你没有通过票")
         return
     try:
-        for message in sent_messages:
-            await context.bot.deleteMessage(
-                chat_id=TG_PUBLISH_CHANNEL, message_id=message
+        for publish_channel, message_ids in retract_message_ids.items():
+            await context.bot.delete_messages(
+                chat_id=publish_channel, message_ids=message_ids
             )
         await query.answer("↩️ 已撤回")
         submission_meta["reviewer"][query.from_user.id][2] = "通过后撤回"

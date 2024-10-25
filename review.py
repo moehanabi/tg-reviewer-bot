@@ -89,57 +89,68 @@ async def approve_submission(
         ]:
             Reviewer.count_increase(reviewer_id, "reject_but_approved_count")
     # then send this submission to the publish channel
-    # if the submission is nsfw
-    skip_all = None
-    has_spoiler = False
-    if ReviewChoice.NSFW in review_options:
-        has_spoiler = True
-        inline_keyboard = InlineKeyboardMarkup(
-            [[InlineKeyboardButton("跳到下一条", url=f"https://t.me/")]]
+    main_channel_messages = None
+    retract_messages = {}
+    for publish_channel in TG_PUBLISH_CHANNEL:
+        # if the submission is nsfw
+        skip_all = None
+        has_spoiler = False
+        if ReviewChoice.NSFW in review_options:
+            has_spoiler = True
+            inline_keyboard = InlineKeyboardMarkup(
+                [[InlineKeyboardButton("跳到下一条", url=f"https://t.me/")]]
+            )
+            skip_all = await context.bot.send_message(
+                chat_id=publish_channel,
+                text="⚠️ #NSFW 提前预警",
+                reply_markup=inline_keyboard,
+            )
+        # get all append messages from submission_meta['append']
+        append_messages = []
+        for append_list in submission_meta["append"].values():
+            append_messages.extend(append_list)
+        append_messages_string = "\n".join(append_messages)
+        sent_messages = await send_submission(
+            context=context,
+            chat_id=publish_channel,
+            media_id_list=submission_meta["media_id_list"],
+            media_type_list=submission_meta["media_type_list"],
+            documents_id_list=submission_meta["documents_id_list"],
+            document_type_list=submission_meta["document_type_list"],
+            text=submission_meta["text"] + "\n" + append_messages_string,
+            has_spoiler=has_spoiler,
         )
-        skip_all = await context.bot.send_message(
-            chat_id=TG_PUBLISH_CHANNEL,
-            text="⚠️ #NSFW 提前预警",
-            reply_markup=inline_keyboard,
-        )
-    # get all append messages from submission_meta['append']
-    append_messages = []
-    for append_list in submission_meta["append"].values():
-        append_messages.extend(append_list)
-    append_messages_string = "\n".join(append_messages)
-    sent_messages = await send_submission(
-        context=context,
-        chat_id=TG_PUBLISH_CHANNEL,
-        media_id_list=submission_meta["media_id_list"],
-        media_type_list=submission_meta["media_type_list"],
-        documents_id_list=submission_meta["documents_id_list"],
-        document_type_list=submission_meta["document_type_list"],
-        text=submission_meta["text"] + "\n" + append_messages_string,
-        has_spoiler=has_spoiler,
+        if main_channel_messages is None:
+            main_channel_messages = sent_messages
+        # edit the skip_all message
+        if skip_all:
+            url_parts = sent_messages[-1].link.rsplit("/", 1)
+            next_url = url_parts[0] + "/" + str(int(url_parts[-1]) + 1)
+            inline_keyboard = InlineKeyboardMarkup(
+                [[InlineKeyboardButton("跳到下一条", url=next_url)]]
+            )
+            await skip_all.edit_text(
+                text="⚠️ #NSFW 提前预警", reply_markup=inline_keyboard
+            )
+        # add inline keyboard to jump to this submission and its comments in the publish channel
+        sent_message_ids = [message.message_id for message in sent_messages]
+        if skip_all is not None:
+            sent_message_ids.append(skip_all.message_id)
+        sent_message_ids = ",".join(str(i) for i in sent_message_ids)
+        retract_messages[publish_channel] = sent_message_ids
+    review_message_ids = ";".join(
+        publish_channel + ":" + retract_messages[publish_channel]
+        for publish_channel in retract_messages
     )
-    # edit the skip_all message
-    if skip_all:
-        url_parts = sent_messages[-1].link.rsplit("/", 1)
-        next_url = url_parts[0] + "/" + str(int(url_parts[-1]) + 1)
-        inline_keyboard = InlineKeyboardMarkup(
-            [[InlineKeyboardButton("跳到下一条", url=next_url)]]
-        )
-        await skip_all.edit_text(
-            text="⚠️ #NSFW 提前预警", reply_markup=inline_keyboard
-        )
-    # add inline keyboard to jump to this submission and its comments in the publish channel
-    sent_message_ids = [message.message_id for message in sent_messages]
-    if skip_all is not None:
-        sent_message_ids.append(skip_all.message_id)
-    sent_message_ids = ",".join(str(i) for i in sent_message_ids)
     inline_keyboard = InlineKeyboardMarkup(
         [
             [
                 InlineKeyboardButton(
-                    "在频道中查看", url=sent_messages[0].link
+                    "在频道中查看", url=main_channel_messages[0].link
                 ),
                 InlineKeyboardButton(
-                    "查看评论区", url=f"{sent_messages[0].link}?comment=1"
+                    "查看评论区",
+                    url=f"{main_channel_messages[0].link}?comment=1",
                 ),
             ],
             [
@@ -149,7 +160,7 @@ async def approve_submission(
                 ),
                 InlineKeyboardButton(
                     "↩️ 撤稿",
-                    callback_data=f"{ReviewChoice.APPROVED_RETRACT}.{sent_message_ids}",
+                    callback_data=f"{ReviewChoice.APPROVED_RETRACT}.{review_message_ids}",
                 ),
             ],
         ]
@@ -169,10 +180,11 @@ async def approve_submission(
             [
                 [
                     InlineKeyboardButton(
-                        "在频道中查看", url=sent_messages[0].link
+                        "在频道中查看", url=main_channel_messages[0].link
                     ),
                     InlineKeyboardButton(
-                        "查看评论区", url=f"{sent_messages[0].link}?comment=1"
+                        "查看评论区",
+                        url=f"{main_channel_messages[0].link}?comment=1",
                     ),
                 ]
             ]
