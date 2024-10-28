@@ -35,8 +35,12 @@ submission_meta = {
     "document_type_list": [document1.type, document2.type, ...],
     "append": {
         reviewer1.full_name: ["审核注：...", ...],
-        reviewer1.full_name: ["审核注：...", ...],
+        reviewer2.full_name: ["审核注：...", ...],
     },
+    "sent_msg": {
+        publish_channel1: [msg_id1, msg_id2, ...],
+        publish_channel2: [msg_id1, msg_id2, ...],
+    }
 }
 """
 
@@ -483,12 +487,6 @@ async def retract_approved_submission(
     if query.from_user.id not in submission_meta["reviewer"]:
         await query.answer("😂 你没有投票")
         return
-    retract_message_ids = query.data.split(".", 1)[-1]
-    retract_message_ids = {
-        publish_channel: [int(msg_id) for msg_id in message_ids_str.split(",")]
-        for part in retract_message_ids.split(";")
-        for publish_channel, message_ids_str in [part.split(":")]
-    }
     if submission_meta["reviewer"][query.from_user.id][2] not in [
         ReviewChoice.SFW,
         ReviewChoice.NSFW,
@@ -496,9 +494,9 @@ async def retract_approved_submission(
         await query.answer("😂 你没有通过票")
         return
     try:
-        for publish_channel, message_ids in retract_message_ids.items():
+        for publish_channel, msg_ids in submission_meta["sent_msg"].items():
             await context.bot.delete_messages(
-                chat_id=publish_channel, message_ids=message_ids
+                chat_id=publish_channel, message_ids=msg_ids
             )
         await query.answer("↩️ 已撤回")
         submission_meta["reviewer"][query.from_user.id][2] = "通过后撤回"

@@ -90,7 +90,7 @@ async def approve_submission(
             Reviewer.count_increase(reviewer_id, "reject_but_approved_count")
     # then send this submission to the publish channel
     main_channel_messages = None
-    retract_messages = {}
+    submission_meta["sent_msg"] = {}
     for publish_channel in TG_PUBLISH_CHANNEL:
         # if the submission is nsfw
         skip_all = None
@@ -136,12 +136,8 @@ async def approve_submission(
         sent_message_ids = [message.message_id for message in sent_messages]
         if skip_all is not None:
             sent_message_ids.append(skip_all.message_id)
-        sent_message_ids = ",".join(str(i) for i in sent_message_ids)
-        retract_messages[publish_channel] = sent_message_ids
-    review_message_ids = ";".join(
-        publish_channel + ":" + retract_messages[publish_channel]
-        for publish_channel in retract_messages
-    )
+        submission_meta["sent_msg"][publish_channel] = sent_message_ids
+    
     inline_keyboard = InlineKeyboardMarkup(
         [
             [
@@ -160,7 +156,7 @@ async def approve_submission(
                 ),
                 InlineKeyboardButton(
                     "↩️ 撤稿",
-                    callback_data=f"{ReviewChoice.APPROVED_RETRACT}.{review_message_ids}",
+                    callback_data=f"{ReviewChoice.APPROVED_RETRACT}",
                 ),
             ],
         ]
