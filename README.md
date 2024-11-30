@@ -1,6 +1,6 @@
 # tg reviewer bot
 
-Telegram 投稿/审稿机器人，基于 Telegram Bot API 7.1 以及 python-telegram-bot v21.0.1
+Telegram 投稿/审稿机器人，基于 Telegram Bot API 7.1 以及 python-telegram-bot v21.0.1, SQLAlchemy 2.0.29, PyMySQL 1.1.0
 
 ## 功能使用方法
 
