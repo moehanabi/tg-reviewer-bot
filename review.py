@@ -18,6 +18,7 @@ from utils import (
     REJECT_NUMBER_REQUIRED,
     REJECTION_REASON,
     TG_PUBLISH_CHANNEL,
+    TG_SELF_APPROVE,
     send_result_to_submitter,
     send_submission,
 )
@@ -45,6 +46,11 @@ async def approve_submission(
     # if the reviewer has already approved or rejected the submission
     if reviewer_id in list(submission_meta["reviewer"]):
         await query_decision(update, context)
+        return
+
+    # if the reviwer is the submitter
+    if not TG_SELF_APPROVE and reviewer_id == submission_meta["submitter"][0]:
+        await query.answer("❌ 你不能给自己投通过票")
         return
 
     # if the reviewer has not approved or rejected the submission
