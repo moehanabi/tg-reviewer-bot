@@ -15,6 +15,7 @@ from db_op import Banned_user, Submitter
 from review_utils import reply_review_message
 from utils import (
     TG_BANNED_NOTIFY,
+    TG_EXPAND_LENGTH,
     TG_REVIEWER_GROUP,
     LRUCache,
     send_result_to_submitter,
@@ -128,6 +129,15 @@ async def confirm_submission(
             or origin_message.caption_markdown_v2_urled
             or ""
         )
+        if len(text) > TG_EXPAND_LENGTH:
+            text = (
+                "**>"
+                + text.replace("**>", "")
+                .replace("||", "")
+                .replace("\n>", "\n")
+                .replace("\n", "\n>")
+                + "||"
+            )
         # add forward origin
         if origin_message.forward_origin is not None:
             forward_string = "\n\n_from_ "

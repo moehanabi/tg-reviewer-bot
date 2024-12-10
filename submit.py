@@ -16,6 +16,7 @@ from db_op import Banned_user, Submitter
 from review_utils import reply_review_message
 from utils import (
     TG_BANNED_NOTIFY,
+    TG_EXPAND_LENGTH,
     TG_REVIEWER_GROUP,
     LRUCache,
     send_result_to_submitter,
@@ -61,6 +62,17 @@ async def confirm_submission(
                 return
         else:
             submission_timestamp.put(submission_id, int(time.time()))
+
+        if len(submission["text"]) > TG_EXPAND_LENGTH:
+            submission["text"] = (
+                "**>"
+                + submission["text"]
+                .replace("**>", "")
+                .replace("||", "")
+                .replace("\n>", "\n")
+                .replace("\n", "\n>")
+                + "||"
+            )
 
         if query.data.startswith("realname"):
             sign_string = f"_via_ [{escape_markdown(user.full_name,version=2,)}](tg://user?id={user.id})"
@@ -192,10 +204,12 @@ async def collect_data(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [
             InlineKeyboardButton(
-                "署名投稿", callback_data=f"realname#{submission["first_message_id"]}"
+                "署名投稿",
+                callback_data=f"realname#{submission["first_message_id"]}",
             ),
             InlineKeyboardButton(
-                "匿名投稿", callback_data=f"anonymous#{submission["first_message_id"]}"
+                "匿名投稿",
+                callback_data=f"anonymous#{submission["first_message_id"]}",
             ),
         ],
         [InlineKeyboardButton("取消投稿", callback_data="cancel")],

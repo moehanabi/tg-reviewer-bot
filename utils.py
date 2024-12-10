@@ -33,6 +33,7 @@ REJECTION_REASON = os.environ.get("TG_REJECTION_REASON", "").split(":")
 TG_DB_URL = os.environ.get("TG_DB_URL", "")
 TG_SINGLE_MODE = os.getenv("TG_SINGLE_MODE", "True") == "True"
 TG_TEXT_SPOILER = os.getenv("TG_TEXT_SPOILER", "True") == "True"
+TG_EXPAND_LENGTH = int(os.getenv("TG_EXPAND_LENGTH", 200))
 
 
 class PrefixFilter(MessageFilter):
