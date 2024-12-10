@@ -10,7 +10,6 @@ from review_utils import (
     ReviewChoice,
     generate_submission_meta_string,
     get_decision,
-    get_rejection_reason_text,
     remove_decision,
     send_to_rejected_channel,
 )
@@ -19,7 +18,6 @@ from utils import (
     REJECT_NUMBER_REQUIRED,
     REJECTION_REASON,
     TG_PUBLISH_CHANNEL,
-    TG_REJECTED_CHANNEL,
     send_result_to_submitter,
     send_submission,
 )
@@ -32,7 +30,6 @@ async def approve_submission(
 
     action = query.data.split(".")[0]
     review_message = update.effective_message
-    origin_message = review_message.reply_to_message
 
     reviewer_id, reviewer_username, reviewer_fullname = (
         query.from_user.id,
@@ -137,7 +134,7 @@ async def approve_submission(
         if skip_all is not None:
             sent_message_ids.append(skip_all.message_id)
         submission_meta["sent_msg"][publish_channel] = sent_message_ids
-    
+
     inline_keyboard = InlineKeyboardMarkup(
         [
             [

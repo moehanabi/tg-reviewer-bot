@@ -1,5 +1,4 @@
 import time
-from textwrap import dedent
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.constants import MessageOriginType, ParseMode
