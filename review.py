@@ -43,24 +43,33 @@ async def approve_submission(
         )
     )
 
-    # if the reviewer has already approved or rejected the submission
+    already_choose = False
+    # if the reviewer has already rejected the submission
     if reviewer_id in list(submission_meta["reviewer"]):
-        await query_decision(update, context)
-        return
+        already_choose = True
+        if submission_meta["reviewer"][reviewer_id][2] not in [
+            ReviewChoice.SFW,
+            ReviewChoice.NSFW,
+        ]:
+            await query_decision(update, context)
+            return
 
     # if the reviwer is the submitter
     if not TG_SELF_APPROVE and reviewer_id == submission_meta["submitter"][0]:
         await query.answer("❌ 你不能给自己投通过票")
         return
 
-    # if the reviewer has not approved or rejected the submission
+    # if the reviewer has not rejected the submission
     submission_meta["reviewer"][reviewer_id] = [
         reviewer_username,
         reviewer_fullname,
         action,
     ]
+
     # increse reviewer approve count
-    Reviewer.count_increase(reviewer_id, "approve_count")
+    if not already_choose:
+        Reviewer.count_increase(reviewer_id, "approve_count")
+
     # get options from all reviewers
     review_options = [
         reviewer[2] for reviewer in submission_meta["reviewer"].values()
