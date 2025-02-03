@@ -6,6 +6,13 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 
 from db_op import Reviewer, Submitter
+from env import (
+    APPROVE_NUMBER_REQUIRED,
+    REJECT_NUMBER_REQUIRED,
+    REJECTION_REASON,
+    TG_PUBLISH_CHANNEL,
+    TG_SELF_APPROVE,
+)
 from review_utils import (
     ReviewChoice,
     generate_submission_meta_string,
@@ -13,15 +20,7 @@ from review_utils import (
     remove_decision,
     send_to_rejected_channel,
 )
-from utils import (
-    APPROVE_NUMBER_REQUIRED,
-    REJECT_NUMBER_REQUIRED,
-    REJECTION_REASON,
-    TG_PUBLISH_CHANNEL,
-    TG_SELF_APPROVE,
-    send_result_to_submitter,
-    send_submission,
-)
+from utils import send_result_to_submitter, send_submission
 
 
 async def approve_submission(

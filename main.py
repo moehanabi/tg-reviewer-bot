@@ -9,6 +9,7 @@ from telegram.ext import (
 )
 
 from ban import ban_user, list_banned_users, unban_user
+from env import TG_BOT_USERNAME, TG_REVIEWER_GROUP, TG_SINGLE_MODE, TG_TOKEN
 from review import (
     approve_submission,
     query_decision,
@@ -25,13 +26,7 @@ from review_utils import (
     send_custom_rejection_reason,
 )
 from stats import reviewer_stats, submitter_stats
-from utils import (
-    TG_BOT_USERNAME,
-    TG_REVIEWER_GROUP,
-    TG_SINGLE_MODE,
-    TG_TOKEN,
-    PrefixFilter,
-)
+from utils import PrefixFilter
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",

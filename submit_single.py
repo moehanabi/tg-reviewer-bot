@@ -11,11 +11,9 @@ from telegram.ext import (
 from telegram.helpers import escape_markdown
 
 from db_op import Banned_user, Submitter
+from env import TG_BANNED_NOTIFY, TG_EXPAND_LENGTH, TG_REVIEWER_GROUP
 from review_utils import reply_review_message
 from utils import (
-    TG_BANNED_NOTIFY,
-    TG_EXPAND_LENGTH,
-    TG_REVIEWER_GROUP,
     LRUCache,
     send_result_to_submitter,
     send_submission,

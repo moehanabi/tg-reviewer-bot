@@ -9,16 +9,15 @@ from telegram.ext import ContextTypes
 from telegram.helpers import escape_markdown
 
 from db_op import Reviewer, Submitter
-from utils import (
+from env import (
     APPROVE_NUMBER_REQUIRED,
     REJECT_NUMBER_REQUIRED,
     REJECTION_REASON,
     TG_REJECT_REASON_USER_LIMIT,
     TG_REJECTED_CHANNEL,
     TG_RETRACT_NOTIFY,
-    send_result_to_submitter,
-    send_submission,
 )
+from utils import send_result_to_submitter, send_submission
 
 """
 submission_meta = {
