@@ -119,6 +119,56 @@ class Banned_user(Base):
             return None
 
 
+class Banned_origin(Base):
+    __tablename__ = "banned_origins"
+    origin_id: Mapped[id_pk]
+    banned_reason: Mapped[str] = mapped_column(String(50), nullable=True)
+    banned_date: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    banned_by: Mapped[id]
+
+    def __repr__(self):
+        return f"Banned_origin({self.origin_id}, Banned Date: {self.banned_date}, Banned By: {self.banned_by}), Reason: {self.banned_reason})"
+
+    @staticmethod
+    def ban_origin(origin_id, banned_by, banned_reason=None):
+        try:
+            db.insert(
+                Banned_origin,
+                origin_id=origin_id,
+                banned_by=banned_by,
+                banned_reason=banned_reason,
+            )
+        except IntegrityError as e:
+            print(f"IntegrityError: {e}")
+
+    @staticmethod
+    def is_banned(origin_id):
+        return bool(
+            db.select(Banned_origin, Banned_origin.origin_id == origin_id)
+        )
+
+    @staticmethod
+    def unban_origin(origin_id):
+        db.delete(Banned_origin, Banned_origin.origin_id == origin_id)
+
+    @staticmethod
+    def get_banned_origins():
+        list = db.select(Banned_origin)
+        return list
+
+    @staticmethod
+    def get_banned_origin(origin_id):
+        try:
+            return db.select(
+                Banned_origin, Banned_origin.origin_id == origin_id
+            )[0]
+        except IndexError:
+            print(f"IndexError: Banned Origin {origin_id} not found")
+            return None
+
+
 class Reviewer(Base):
     __tablename__ = "reviewers"
     user_id: Mapped[id_pk]

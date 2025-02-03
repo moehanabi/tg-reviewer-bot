@@ -8,7 +8,14 @@ from telegram.ext import (
     filters,
 )
 
-from ban import ban_user, list_banned_users, unban_user
+from ban import (
+    ban_origin,
+    ban_user,
+    list_banned_origins,
+    list_banned_users,
+    unban_origin,
+    unban_user,
+)
 from env import TG_BOT_USERNAME, TG_REVIEWER_GROUP, TG_SINGLE_MODE, TG_TOKEN
 from review import (
     approve_submission,
@@ -126,6 +133,24 @@ if __name__ == "__main__":
             CommandHandler(
                 "listban",
                 list_banned_users,
+                filters=~filters.UpdateType.EDITED_MESSAGE
+                & filters.Chat(chat_id=int(TG_REVIEWER_GROUP)),
+            ),
+            CommandHandler(
+                "ban_origin",
+                ban_origin,
+                filters=~filters.UpdateType.EDITED_MESSAGE
+                & filters.Chat(chat_id=int(TG_REVIEWER_GROUP)),
+            ),
+            CommandHandler(
+                "unban_origin",
+                unban_origin,
+                filters=~filters.UpdateType.EDITED_MESSAGE
+                & filters.Chat(chat_id=int(TG_REVIEWER_GROUP)),
+            ),
+            CommandHandler(
+                "listban_origin",
+                list_banned_origins,
                 filters=~filters.UpdateType.EDITED_MESSAGE
                 & filters.Chat(chat_id=int(TG_REVIEWER_GROUP)),
             ),

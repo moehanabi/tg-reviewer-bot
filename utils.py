@@ -10,7 +10,7 @@ from telegram import (
 from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from telegram.ext.filters import MessageFilter
-from db_op import Banned_user
+from db_op import Banned_origin, Banned_user
 from env import TG_BANNED_NOTIFY, TG_TEXT_SPOILER
 
 
@@ -220,6 +220,16 @@ async def check_submission(update):
         if TG_BANNED_NOTIFY:
             await update.message.reply_text("你已被禁止投稿。")
         return False
+    forward_from = update._effective_message.forward_origin
+    if forward_from is not None:
+        if forward_from.type == forward_from.USER:
+            if Banned_origin.is_banned(forward_from.sender_user.id):
+                await update.message.reply_text("此来源的投稿不被接受。")
+                return False
+        if forward_from.type == forward_from.CHANNEL:
+            if Banned_origin.is_banned(forward_from.chat.id):
+                await update.message.reply_text("此来源的投稿不被接受。")
+                return False
     return True
 
 
@@ -245,3 +255,11 @@ class LRUCache:
             else:
                 self.dict.popitem(last=False)
         self.dict[key] = value
+
+
+def is_integer(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
