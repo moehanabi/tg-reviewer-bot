@@ -215,6 +215,14 @@ async def get_name_from_uid(context, user_id):
         return "", ""
 
 
+async def check_submission(update):
+    if Banned_user.is_banned(update.effective_user.id):
+        if TG_BANNED_NOTIFY:
+            await update.message.reply_text("你已被禁止投稿。")
+        return False
+    return True
+
+
 class LRUCache:
     def __init__(self, capacity: int):
         self.dict = collections.OrderedDict()

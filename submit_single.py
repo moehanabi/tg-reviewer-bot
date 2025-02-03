@@ -10,11 +10,12 @@ from telegram.ext import (
 )
 from telegram.helpers import escape_markdown
 
-from db_op import Banned_user, Submitter
-from env import TG_BANNED_NOTIFY, TG_EXPAND_LENGTH, TG_REVIEWER_GROUP
+from db_op import Submitter
+from env import TG_EXPAND_LENGTH, TG_REVIEWER_GROUP
 from review_utils import reply_review_message
 from utils import (
     LRUCache,
+    check_submission,
     send_result_to_submitter,
     send_submission,
 )
@@ -24,9 +25,7 @@ submission_timestamp = LRUCache(20)
 
 
 async def reply_option(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if Banned_user.is_banned(update.effective_user.id):
-        if TG_BANNED_NOTIFY:
-            await update.message.reply_text("你已被禁止投稿。")
+    if await check_submission(update) == False:
         return
 
     message = update.message
