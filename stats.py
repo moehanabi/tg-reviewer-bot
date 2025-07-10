@@ -21,7 +21,7 @@ async def submitter_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("还没有投稿过任何内容")
         return
     reply_string = "*\-\-基础信息\-\-*\n" + escape_markdown(
-        f"投稿数量: {submitter_info.submission_count}\n通过数量: {submitter_info.approved_count}\n拒绝数量: {submitter_info.rejected_count}\n投稿通过率: {submitter_info.approved_count / submitter_info.submission_count * 100:.2f}%",
+        f"投稿数量: {submitter_info.submission_count}\n通过数量: {submitter_info.approved_count}\n拒绝数量: {submitter_info.rejected_count}\n投稿通过率: {submitter_info.approved_count / (submitter_info.rejected_count + submitter_info.approved_count) * 100:.2f}%",
         version=2,
     )
     await update.message.reply_text(
