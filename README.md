@@ -55,22 +55,23 @@ Telegram 投稿/审稿机器人，基于 Telegram Bot API 7.1 以及 python-tele
 
 | 配置项名称                    | 描述                                                                                                                                                | 示例值                                 | 必须 | 默认值 |
 | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- | ---- | ------ |
-| `TG_TOKEN`                    | Telegram 机器人的 API 令牌                                                                                                                          | `123456789:ABCdefGhIJKlmNopQRSTuvwxYz` |  是  |   -    |
-| `TG_REVIEWER_GROUP`           | 审稿群组的 ID，用于发送审稿消息                                                                                                                     | `123456789`                            |  是  |   -    |
-| `TG_PUBLISH_CHANNEL`          | 发布投稿频道的 ID，用于发布审核通过的投稿，可设置多个，以冒号分隔。若有多个频道，第一个频道作为主频道，用于审核通过后作为跳转按钮中链接的频道       | `123456789` 或 `123456789:987654321`   |  是  |   -    |
-| `TG_REJECTED_CHANNEL`         | 被拒绝投稿的频道 ID，用于发送被拒绝的内容，若不存在则不转发被拒稿件                                                                                 | `123456789`                            |  否  |  ' '   |
-| `TG_BOT_USERNAME`             | Telegram 机器人的用户名                                                                                                                             | `my_review_bot`                        |  是  |   -    |
+| `TG_TOKEN`                    | Telegram 机器人的 API 令牌                                                                                                                          | `123456789:ABCdefGhIJKlmNopQRSTuvwxYz` |  是  | - |
+| `TG_REVIEWER_GROUP`           | 审稿群组的 ID，用于发送审稿消息                                                                                                                     | `123456789`                            |  是  | - |
+| `TG_PUBLISH_CHANNEL`          | 发布投稿频道的 ID，用于发布审核通过的投稿，可设置多个，以冒号分隔。若有多个频道，第一个频道作为主频道，用于审核通过后作为跳转按钮中链接的频道       | `123456789` 或 `123456789:987654321`   |  是  | - |
+| `TG_REJECTED_CHANNEL`         | 被拒绝投稿的频道 ID，用于发送被拒绝的内容，若不存在则不转发被拒稿件                                                                                 | `123456789`                            |  否  | - |
+| `TG_BOT_USERNAME`             | Telegram 机器人的用户名                                                                                                                             | `my_review_bot`                        |  是  | - |
 | `TG_DB_URL`                   | 机器人数据库地址，默认使用 SQLite                                                                                                                   | `sqlite:///data/database.db`           |  否  | "sqlite:///data/database.db" |
-| `TG_RETRACT_NOTIFY`           | 是否通知投稿者稿件被撤回                                                                                                                            | `True` 或 `False`                      |  否  |  True  |
-| `TG_APPROVE_NUMBER_REQUIRED`  | 通过所需的最小审核人数                                                                                                                              | `2`                                    |  否  |    2   |
-| `TG_REJECT_NUMBER_REQUIRED`   | 拒稿所需的最小审核人数                                                                                                                              | `2`                                    |  否  |    2   |
-| `TG_REJECTION_REASON`         | 预置拒绝理由的列表，以冒号分隔                                                                                                                      | `"已有其他相似投稿:内容不够有趣:引起感官不适"`   |  否  |  "已有其他相似投稿:内容不够有趣:内容过于火星:引起感官不适:内容 NSFW:没有 Get 到梗:不在可接受范围内:点错了，正在召唤补发"  |
-| `TG_BANNED_NOTIFY`            | 是否通知投稿者已被屏蔽                                                                                                                              | `True` 或 `False`                      |  否  |  True  |
-| `TG_REJECT_REASON_USER_LIMIT` | 是否限制只能由原拒稿人选择拒稿理由，若为 `False` 表示任意其他审稿人都将作为新的拒稿人，可以选择拒稿理由                                             | `True` 或 `False`                      |  否  |  True  |
-| `TG_SINGLE_MODE`              | 是否将多条消息作为多次投稿，若为 `True` 表示一条消息是一次投稿，若为 `False` 表示将多次发送的消息合并为一次投稿，此时需要以 `/new` 命令开始新的投稿 | `True` 或 `False`                      |  否  |  True  |
-| `TG_TEXT_SPOILER`             | 是否为 NSFW 投稿的文字添加遮罩                                                                                                                      | `True` 或 `False`                      |  否  |  True  |
-| `TG_EXPAND_LENGTH`            | 文字长度大于多少时进行折叠                                                                                                                          | `200`                                  |  否  |   200  |
-| `TG_SELF_APPROVE`             | 是否允许审核给自己的稿件投通过票，True 为允许，False 为禁止                                                                                         | `True` 或 `False`                      |  否  |  True  |
+| `TG_RETRACT_NOTIFY`           | 是否通知投稿者稿件被撤回                                                                                                                            | `True` 或 `False`                      |  否  | True |
+| `TG_APPROVE_NUMBER_REQUIRED`  | 通过所需的最小审核人数                                                                                                                              | `2`                                    |  否  | 2 |
+| `TG_REJECT_NUMBER_REQUIRED`   | 拒稿所需的最小审核人数                                                                                                                              | `2`                                    |  否  | 2 |
+| `TG_REJECTION_REASON`         | 预置拒绝理由的列表，以冒号分隔                                                                                                                      | `"已有其他相似投稿:内容不够有趣"`      |  否  | "已有其他相似投稿:内容不够有趣:内容过于火星:引起感官不适:内容 NSFW:没有 Get 到梗:不在可接受范围内:点错了，正在召唤补发"  |
+| `TG_BANNED_NOTIFY`            | 是否通知投稿者已被屏蔽                                                                                                                              | `True` 或 `False`                      |  否  | True |
+| `TG_REJECT_REASON_USER_LIMIT` | 是否限制只能由原拒稿人选择拒稿理由，若为 `False` 表示任意其他审稿人都将作为新的拒稿人，可以选择拒稿理由                                             | `True` 或 `False`                      |  否  | True |
+| `TG_SINGLE_MODE`              | 是否将多条消息作为多次投稿，若为 `True` 表示一条消息是一次投稿，若为 `False` 表示将多次发送的消息合并为一次投稿，此时需要以 `/new` 命令开始新的投稿 | `True` 或 `False`                      |  否  | True |
+| `TG_TEXT_SPOILER`             | 是否为 NSFW 投稿的文字添加遮罩                                                                                                                      | `True` 或 `False`                      |  否  | True |
+| `TG_EXPAND_LENGTH`            | 文字长度大于多少时进行折叠                                                                                                                          | `200`                                  |  否  | 200 |
+| `TG_SELF_APPROVE`             | 是否允许审核给自己的稿件投通过票，True 为允许，False 为禁止                                                                                         | `True` 或 `False`                      |  否  | True |
+| `TG_REVIEWONLY`               | 当值为 `True` 时，将不再接受新投稿                                                                                                                  | `True` 或 `False`                      |  否  | False |
 
 请确保在使用项目前正确设置这些环境变量，以保证程序的正常运行。对于标记为“是”的变量，它们是项目运行所必需的，而对于标记为“否”的变量，则为可选配置，如果未设置，项目将使用默认值或不执行相关功能。
 
