@@ -163,5 +163,5 @@ cython_debug/
 .vscode
 
 # This project
-database.db
 venv-run/
+data/
