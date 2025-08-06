@@ -16,7 +16,7 @@ from ban import (
     unban_origin,
     unban_user,
 )
-from env import TG_BOT_USERNAME, TG_REVIEWER_GROUP, TG_SINGLE_MODE, TG_TOKEN
+from env import TG_BOT_USERNAME, TG_REVIEWER_GROUP, TG_SINGLE_MODE, TG_TOKEN, TG_CUSTOMAPI
 from review import (
     approve_submission,
     query_decision,
@@ -44,6 +44,7 @@ if __name__ == "__main__":
     application = (
         ApplicationBuilder()
         .token(TG_TOKEN)
+        .base_url(TG_CUSTOMAPI)
         .get_updates_connect_timeout(60)
         .connect_timeout(60)
         .get_updates_read_timeout(60)
