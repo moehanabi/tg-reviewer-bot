@@ -48,3 +48,5 @@ TG_REJECTED_CHANNEL     = os.environ.get("TG_REJECTED_CHANNEL")
 REJECTION_REASON        = os.environ.get("TG_REJECTION_REASON", "已有其他相似投稿:内容不够有趣:内容过于火星:引起感官不适:内容 NSFW:没有 Get 到梗:不在可接受范围内:点错了，正在召唤补发").split(":")
 
 TG_DB_URL               = os.environ.get("TG_DB_URL", "sqlite:///data/database.db")
+
+TG_CUSTOMAPI            = os.environ.get("TG_CUSTOMAPI", "https://api.telegram.org/bot")
