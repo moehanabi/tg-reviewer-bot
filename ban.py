@@ -147,7 +147,7 @@ async def ban_origin(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 context, Banned_origin.get_banned_origin(origin)
             )
             + escape_markdown(
-                f"\n\n#BAN_ORIGIN_{origin.replace("-", "")} #OPERATOR_{update.effective_user.id}",
+                f'\n\n#BAN_ORIGIN_{origin.replace("-", "")} #OPERATOR_{update.effective_user.id}',
                 version=2,
             ),
             parse_mode=ParseMode.MARKDOWN_V2,
@@ -193,7 +193,7 @@ async def unban_origin(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(
             f"*{escape_markdown(origin, version=2,)}* "
             + escape_markdown(
-                f"已解除屏蔽\n\n#UNBAN_ORIGIN_{origin.replace("-", "")} #OPERATOR_{update.effective_user.id}",
+                f'已解除屏蔽\n\n#UNBAN_ORIGIN_{origin.replace("-", "")} #OPERATOR_{update.effective_user.id}',
                 version=2,
             ),
             parse_mode=ParseMode.MARKDOWN_V2,
