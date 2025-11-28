@@ -2,6 +2,7 @@ import os
 
 # get args from environment virables
 TG_TOKEN = os.environ.get("TG_TOKEN")
+TG_CUSTOMAPI = os.environ.get("TG_CUSTOMAPI", "https://api.telegram.org/bot")
 TG_REVIEWER_GROUP = os.environ.get("TG_REVIEWER_GROUP")
 TG_PUBLISH_CHANNEL = os.environ.get("TG_PUBLISH_CHANNEL").split(":")
 TG_REJECTED_CHANNEL = os.environ.get("TG_REJECTED_CHANNEL")
