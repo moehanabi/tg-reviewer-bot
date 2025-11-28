@@ -11,7 +11,7 @@ from telegram.ext import (
 from telegram.helpers import escape_markdown
 
 from db_op import Submitter
-from env import TG_EXPAND_LENGTH, TG_REVIEWER_GROUP
+from env import TG_EXPAND_LENGTH, TG_REVIEWER_GROUP, TG_REVIEWONLY
 from review_utils import reply_review_message
 from utils import (
     LRUCache,
@@ -26,6 +26,12 @@ submission_timestamp = LRUCache(20)
 
 async def reply_option(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if await check_submission(update) == False:
+        return
+
+    if TG_REVIEWONLY:
+        await update.message.reply_text(
+            "本 Bot 已暂停使用。请查看频道获取更多信息",
+            quote=True,)
         return
 
     message = update.message

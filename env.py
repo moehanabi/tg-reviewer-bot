@@ -11,6 +11,8 @@ TG_BANNED_NOTIFY = os.getenv("TG_BANNED_NOTIFY", "True") == "True"
 TG_REJECT_REASON_USER_LIMIT = (
     os.getenv("TG_REJECT_REASON_USER_LIMIT", "True") == "True"
 )
+
+TG_REVIEWONLY = os.getenv("TG_REVIEWONLY", "False") == "True"
 try:
     APPROVE_NUMBER_REQUIRED = int(os.getenv("TG_APPROVE_NUMBER_REQUIRED", 2))
 except (TypeError, ValueError):
