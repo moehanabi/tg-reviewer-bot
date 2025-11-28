@@ -101,6 +101,7 @@ async def list_banned_users(
     for user in users:
         new_banned_usr_str = f"\- {await get_banned_user_info(context, user)}\n"
         if len(users_string + new_banned_usr_str) >= 1300:
+            user_string += "（未完待续）"
             await update.message.reply_text(
                 users_string,
                 parse_mode=ParseMode.MARKDOWN_V2,
