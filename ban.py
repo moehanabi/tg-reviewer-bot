@@ -201,18 +201,15 @@ async def ban_origin(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def get_banned_origin_info(context: ContextTypes.DEFAULT_TYPE, origin):
-    banned_origininfo = escape_markdown(
-        f"({origin.origin_id})",
-        version=2,
-    )
+    banned_origininfo = f"`{origin.origin_id}`"
     banned_by_originname, banned_by_fullname = await get_name_from_uid(
         context, origin.banned_by
     )
     banned_by_origininfo = escape_markdown(
-        f"{banned_by_fullname} ({banned_by_originname}, {origin.banned_by})",
+        f"{sanitize_userinfo(banned_by_fullname)} (@{banned_by_originname}, `{origin.banned_by}`)",
         version=2,
     )
-    origins_string = f"*{banned_origininfo}* 在 *{escape_markdown(str(origin['banned_date']), version=2)}* 由 *{banned_by_origininfo}* 因 *{escape_markdown(origin['banned_reason'], version=2)}* 屏蔽"
+    origins_string = f"{banned_origininfo}\n  在 {escape_markdown(str(origin['banned_date']), version=2)}\n  由 {banned_by_origininfo}\n  因 `{escape_markdown(origin['banned_reason'], version=2)}` 屏蔽"
     return origins_string
 
 
