@@ -15,7 +15,6 @@ from typing_extensions import Annotated
 
 from env import TG_DB_URL
 
-
 class Base(DeclarativeBase):
     pass
 
