@@ -14,6 +14,12 @@ async def ban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     user, result = context.args[0], context.args[1:]
+    if user.startswith(("#USER_","#SUBMITTER_")):
+        if user.startswith("#USER_"):
+            user = user[6:]
+        elif user.startswith("#SUBMITTER_"):
+            user = user[11:]
+
     if not user.isdigit():
         await update.message.reply_text(
             f"ID *{escape_markdown(user,version=2,)}* 无效",
@@ -75,12 +81,27 @@ async def unban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     user = context.args[0]
+
+    if user.startswith(("#USER_","#SUBMITTER_")):
+        if user.startswith("#USER_"):
+            user = user[6:]
+        elif user.startswith("#SUBMITTER_"):
+            user = user[11:]
+
+    if not user.isdigit():
+        await update.message.reply_text(
+            f"ID *{escape_markdown(user,version=2,)}* 无效",
+            parse_mode=ParseMode.MARKDOWN_V2,
+        )
+        return
+
     Banned_user.unban_user(user)
     if Banned_user.is_banned(user):
         await update.message.reply_text(
             f"*{user}* 解除屏蔽失败",
             parse_mode=ParseMode.MARKDOWN_V2,
         )
+        return
     else:
         await update.message.reply_text(
             f"*{user}* "
@@ -90,6 +111,7 @@ async def unban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ),
             parse_mode=ParseMode.MARKDOWN_V2,
         )
+        return
 
 
 async def list_banned_users(
