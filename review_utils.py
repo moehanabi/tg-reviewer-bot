@@ -658,7 +658,7 @@ def generate_submission_meta_string(submission_meta):
                     option_sign = "🔴"
                 case _:
                     option_text = (
-                        f"因为 {get_rejection_reason_text(option)} 拒稿"
+                        f"因为 {escape_markdown(get_rejection_reason_text(option),version=2)} 拒稿"
                     )
                     option_sign = "🔴"
             reviewers_string += f"\n\\- {option_sign} 由 {escape_markdown(sanitize_userinfo(reviewer_fullname),version=2)} \\({f'@{reviewer_username}, ' if reviewer_username else ''}`{reviewer_id}`\\) {escape_markdown(option_text,version=2)}"
@@ -709,7 +709,7 @@ def generate_submission_meta_string(submission_meta):
 
     submission_meta_text = f"[\u200b](http://t.me/{base64.urlsafe_b64encode(pickle.dumps(submission_meta)).decode()})"
     visible_content = dedent(
-            f"""\
+        f"""\
 {status_title}\n
 {submitter_string}
 {reviewers_string}
