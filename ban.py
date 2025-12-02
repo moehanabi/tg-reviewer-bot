@@ -21,11 +21,32 @@ async def ban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
             user = user[11:]
 
     if not user.isdigit():
-        await update.message.reply_text(
-            f"ID *{escape_markdown(user,version=2,)}* 无效",
-            parse_mode=ParseMode.MARKDOWN_V2,
-        )
-        return
+        if update.message.reply_to_message:
+            replyto_user_id = str(update.message.reply_to_message.from_user.id)
+            self_id = str((await context.bot.get_me()).id)
+            if replyto_user_id == self_id:
+                tag_submitter_id = re.findall(r"#SUBMITTER_(\d+)", update.message.reply_to_message.text)
+                if tag_submitter_id:
+                    result = user
+                    user = tag_submitter_id[-1]
+                else:
+                    update.message.reply_text(
+                        f"ID *{escape_markdown(user,version=2,)}* 无效，且回复的消息中无投稿人信息。",
+                        parse_mode=ParseMode.MARKDOWN_V2,
+                    )
+                    return
+            else:
+                update.message.reply_text(
+                    f"ID *{escape_markdown(user,version=2,)}* 无效，且回复的消息不是投稿机器人消息。",
+                    parse_mode=ParseMode.MARKDOWN_V2,
+                )
+                return
+        else:                
+            await update.message.reply_text(
+                f"ID *{escape_markdown(user,version=2,)}* 无效",
+                parse_mode=ParseMode.MARKDOWN_V2,
+            )
+            return
     if Banned_user.is_banned(user):
         await update.message.reply_text(
             f"{user} 先前已被屏蔽\n"
