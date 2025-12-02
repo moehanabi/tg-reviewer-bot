@@ -8,16 +8,31 @@ from telegram.helpers import escape_markdown
 from db_op import Reviewer, Submitter
 from env import TG_REVIEWER_GROUP
 
+import re
 
 async def submitter_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         if not str(update.effective_chat.id).startswith("-100"):
-            submitter_id = str(update.effective_user.id)
+            submitter_id = str(update.effective_chat.id)
         elif str(update.effective_chat.id) == TG_REVIEWER_GROUP:
-            await update.message.reply_text("请提供用户ID")
+            if update.message.reply_to_message:
+                replyto_user_id = str(update.message.reply_to_message.from_user.id)
+                self_id = str((await context.bot.get_me()).id)
+                if replyto_user_id == self_id:
+                    tag_submitter_id = re.findall(r"#SUBMITTER_(\d+)", update.message.reply_to_message.text)
+                    if tag_submitter_id:
+                        submitter_id = tag_submitter_id[-1]
+                    else:
+                        update.message.reply_text("请提供用户ID")
+                        return
+                else:
+                    submitter_id = replyto_user_id
+            else:
+                submitter_id = str(update.effective_user.id)
+        else:
             return
     else:
-        if not str(update.effective_chat.id).startswith("-100"):
+        if str(update.effective_chat.id) == TG_REVIEWER_GROUP:
             submitter_id = context.args[0]
         else:
             return
@@ -46,17 +61,15 @@ async def submitter_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def reviewer_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not str(update.effective_chat.id).startswith("-100"):
-        if not context.args:
+    if not context.args:
+        if not str(update.effective_chat.id).startswith("-100"):
             reviewer_id = str(update.effective_chat.id)
         elif str(update.effective_chat.id) == TG_REVIEWER_GROUP:
-            reviewer_id = context.args[0]
-    elif str(update.effective_chat.id) == TG_REVIEWER_GROUP:
-        if not context.args:
-            await update.message.reply_text("请提供审稿人 ID")
-            return
+            reviewer_id = str(update.effective_user.id)
         else:
-            reviewer_id = context.args[0]
+            return
+    elif str(update.effective_chat.id) == TG_REVIEWER_GROUP:
+        reviewer_id = context.args[0]
     else:
         return
     if reviewer_id.startswith("#REVIEWER_"):
