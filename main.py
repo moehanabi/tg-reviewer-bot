@@ -169,8 +169,7 @@ if __name__ == "__main__":
             CommandHandler(
                 "reviewer_stats",
                 reviewer_stats,
-                filters=~filters.UpdateType.EDITED_MESSAGE
-                & filters.Chat(chat_id=int(TG_REVIEWER_GROUP)),
+                filters=~filters.UpdateType.EDITED_MESSAGE,
             ),
             CommandHandler(
                 "limit",
