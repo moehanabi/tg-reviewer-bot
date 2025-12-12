@@ -28,3 +28,4 @@ TG_SINGLE_MODE = os.getenv("TG_SINGLE_MODE", "True") == "True"
 TG_TEXT_SPOILER = os.getenv("TG_TEXT_SPOILER", "True") == "True"
 TG_EXPAND_LENGTH = int(os.getenv("TG_EXPAND_LENGTH", 200))
 TG_SELF_APPROVE = os.getenv("TG_SELF_APPROVE", "True") == "True"
+TG_TIMEOUT_SINGLEREVIEW = int(os.getenv("TG_TIMEOUT_SINGLEREVIEW", "10080"))

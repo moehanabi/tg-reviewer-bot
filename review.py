@@ -1,5 +1,6 @@
 import base64
 import pickle
+from datetime import datetime, timedelta, timezone
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.constants import ParseMode
@@ -12,6 +13,7 @@ from env import (
     REJECTION_REASON,
     TG_PUBLISH_CHANNEL,
     TG_SELF_APPROVE,
+    TG_TIMEOUT_SINGLEREVIEW,
 )
 from review_utils import (
     ReviewChoice,
@@ -42,6 +44,7 @@ async def approve_submission(
         )
     )
 
+    submission_longago = (datetime.now(timezone.utc) - update.effective_message.date > timedelta(minutes=TG_TIMEOUT_SINGLEREVIEW))
     already_choose = False
     # if the reviewer has already rejected the submission
     if reviewer_id in list(submission_meta["reviewer"]):
@@ -75,9 +78,8 @@ async def approve_submission(
     ]
     # if the submission has not been approved by enough reviewers
     if (
-        review_options.count(ReviewChoice.NSFW)
-        + review_options.count(ReviewChoice.SFW)
-        < APPROVE_NUMBER_REQUIRED
+        (review_options.count(ReviewChoice.NSFW) + review_options.count(ReviewChoice.SFW) < APPROVE_NUMBER_REQUIRED)
+        and not submission_longago
     ):
         await review_message.edit_text(
             text=generate_submission_meta_string(submission_meta),
@@ -173,7 +175,7 @@ async def approve_submission(
         ]
     )
     await review_message.edit_text(
-        text=generate_submission_meta_string(submission_meta),
+        text=generate_submission_meta_string(submission_meta,longago_approve=submission_longago),
         parse_mode=ParseMode.MARKDOWN_V2,
         reply_markup=inline_keyboard,
     )
@@ -217,6 +219,7 @@ async def reject_submission(
         )
     )
 
+    submission_longago = (datetime.now(timezone.utc) - update.effective_message.date > timedelta(minutes=TG_TIMEOUT_SINGLEREVIEW))
     # if REJECT_DUPLICATE, only one reviewer is enough
     if action == ReviewChoice.REJECT_DUPLICATE:
         # if the reviewer has already approved or rejected the submission, remove the previous decision
@@ -257,7 +260,7 @@ async def reject_submission(
                 )
         return
     # else if the reviewer has already approved or rejected the submission
-    if reviewer_id in list(submission_meta["reviewer"]):
+    if (reviewer_id in list(submission_meta["reviewer"])) and not submission_longago:
         await query_decision(update, context)
         return
     # else if the reviewer has not approved or rejected the submission
@@ -273,7 +276,10 @@ async def reject_submission(
         reviewer[2] for reviewer in submission_meta["reviewer"].values()
     ]
     # if the submission has not been rejected by enough reviewers
-    if review_options.count(ReviewChoice.REJECT) < REJECT_NUMBER_REQUIRED:
+    if (
+        (review_options.count(ReviewChoice.REJECT) < REJECT_NUMBER_REQUIRED)
+        and not submission_longago
+    ):
         await review_message.edit_text(
             text=generate_submission_meta_string(submission_meta),
             parse_mode=ParseMode.MARKDOWN_V2,
