@@ -1,6 +1,5 @@
 import base64
 import pickle
-from textwrap import dedent
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.constants import ParseMode
@@ -668,7 +667,7 @@ def generate_submission_meta_string(submission_meta, longago_status=0):
     for reviewer_fullname, append_list in submission_meta["append"].items():
         append_string += f"\n \\- 由 {sanitize_userinfo(escape_markdown(reviewer_fullname,version=2))} 添加的备注："
         append_string += "".join(
-            f"\n{i+1}\\. {escape_markdown(message,version=2)}" for i, message in enumerate(append_list)
+            f"\n    {i+1}\\. {escape_markdown(message,version=2)}" for i, message in enumerate(append_list)
         )
 
     if append_string == "审稿人备注：":
@@ -711,7 +710,7 @@ def generate_submission_meta_string(submission_meta, longago_status=0):
     tags += f" {status_tag}"
 
     submission_meta_text = f"[\u200b](http://t.me/{base64.urlsafe_b64encode(pickle.dumps(submission_meta)).decode()})"
-    visible_content = dedent(status_title + "\n\n" + submitter_string + "\n" + reviewers_string + "\n" + append_string + "\n当前状态：" + status_string + "\n\n" + escape_markdown(tags,version=2))
+    visible_content = status_title + "\n\n" + submitter_string + "\n" + reviewers_string + "\n" + append_string + "\n当前状态：" + status_string + "\n\n" + escape_markdown(tags,version=2)
 
     # use Zero-width non-joiner and fake url(or the bot api will delete invalid link) to hide the submission_meta
     return f"{visible_content}{submission_meta_text}"
