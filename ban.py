@@ -145,12 +145,12 @@ async def unban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     Banned_user.unban_user(user)
     if Banned_user.is_banned(user):
         await update.message.reply_text(
-            f"*{user}* 解除屏蔽失败",
+            f"`{user}` 解除屏蔽失败",
             parse_mode=ParseMode.MARKDOWN_V2,
         )
     else:
         await update.message.reply_text(
-            f"*{user}* "
+            f"`{user}` "
             + escape_markdown(
                 f"已解除屏蔽\n\n#UNBAN_{user} #USER_{user} #OPERATOR_{update.effective_user.id}",
                 version=2,

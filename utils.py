@@ -226,7 +226,11 @@ def generate_userinfo_str(
 
     if fullname is not None:
         if boldfullname:
-            userinfo_str += ("*" + sanitize_userinfo(escape_markdown(fullname,version = 2)) + "*")
+            fullname_sanitized = sanitize_userinfo(escape_markdown(fullname,version = 2))
+            if fullname_sanitized.startswith("*"):
+                userinfo_str += fullname_sanitized
+            else:
+                userinfo_str += ("*" + fullname_sanitized + "*")
         else:
             userinfo_str += sanitize_userinfo(escape_markdown(fullname,version = 2))
     else:
