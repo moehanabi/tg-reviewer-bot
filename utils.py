@@ -11,6 +11,7 @@ from telegram.constants import ParseMode
 from telegram.ext import ContextTypes
 from telegram.ext.filters import MessageFilter
 from db_op import Banned_origin, Banned_user, Submitter
+from telegram.helpers import escape_markdown
 from env import TG_BANNED_NOTIFY, TG_TEXT_SPOILER
 
 
@@ -213,6 +214,36 @@ async def get_name_from_uid(context, user_id):
     except Exception as e:
         print(e)
         return "", ""
+
+
+def generate_userinfo_str(
+        id: int, fullname: str | None = None,
+        username: str | None = None,
+        mention: bool = True,
+        boldfullname: bool = False
+    ) -> str:
+    userinfo_str = ""
+
+    if fullname is not None:
+        if boldfullname:
+            userinfo_str += ("*" + sanitize_userinfo(escape_markdown(fullname,version = 2)) + "*")
+        else:
+            userinfo_str += sanitize_userinfo(escape_markdown(fullname,version = 2))
+    else:
+        userinfo_str += "*_神秘用户_*"
+
+    userinfo_str += " \\("
+
+    if username is not None:
+        if mention:
+            userinfo_str += ("@" + escape_markdown(username, version = 2))
+        else:
+            userinfo_str += ("`" + escape_markdown(username, version = 2) + "`")
+        userinfo_str += ", "
+
+    userinfo_str += "`" + str(id) + "`\\)"
+
+    return userinfo_str
 
 
 async def check_submission(update):

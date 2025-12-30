@@ -4,7 +4,7 @@ from telegram.ext import ContextTypes
 from telegram.helpers import escape_markdown
 
 from db_op import Banned_origin, Banned_user
-from utils import get_name_from_uid, is_integer, sanitize_userinfo
+from utils import get_name_from_uid, is_integer, generate_userinfo_str
 
 import re
 
@@ -93,27 +93,12 @@ async def ban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
-async def get_banned_user_info(context: ContextTypes.DEFAULT_TYPE, user):
-    banned_userinfo = (
-        "*"
-        + escape_markdown(sanitize_userinfo(user.user_fullname), version=2)
-        + "* \\("
-        + (f"@{escape_markdown(user.user_name, version=2)}, " if user.user_name else "")
-        + "`"
-        + user.user_id
-        + "`\\)"
-    )
+async def get_banned_user_info(context: ContextTypes.DEFAULT_TYPE, user, mention = True):
+    banned_userinfo = generate_userinfo_str(id=int(user.user_id),username=user.user_name,fullname=user.user_fullname,boldfullname=True,mention=mention)
     banned_by_username, banned_by_fullname = await get_name_from_uid(
         context, user.banned_by
     )
-    banned_by_userinfo = (
-        escape_markdown(sanitize_userinfo(banned_by_fullname), version=2)
-        + " \\(@"
-        + escape_markdown(banned_by_username, version=2)
-        + ", `"
-        + user.banned_by
-        + "`\\)"
-    )
+    banned_by_userinfo = generate_userinfo_str(id=int(user.banned_by),username=banned_by_username,fullname=banned_by_fullname,boldfullname=True,mention=mention)
     users_string = f"{banned_userinfo}\n  在 {escape_markdown(str(user['banned_date']), version=2)}\n  由 {banned_by_userinfo}\n  因 `{escape_markdown(user['banned_reason'], version=2)}` 屏蔽"
     return users_string
 
@@ -181,7 +166,7 @@ async def list_banned_users(
     list_banned_users_page_count = 1
     users_string = ("屏蔽用户列表:\n\\=\\= 页面" + str(list_banned_users_page_count) + " \\=\\=\n") if users else "无屏蔽用户\n"
     for user in users:
-        new_banned_usr_str = f"\\- {await get_banned_user_info(context, user)}\n"
+        new_banned_usr_str = f"\\- {await get_banned_user_info(context, user, mention=False)}\n"
         if len(users_string + new_banned_usr_str) >= 1300:
             users_string += "（未完待续）"
             await update.message.reply_text(
@@ -249,10 +234,10 @@ async def ban_origin(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def get_banned_origin_info(context: ContextTypes.DEFAULT_TYPE, origin):
     banned_origininfo = f"`{origin.origin_id}`"
-    banned_by_originname, banned_by_fullname = await get_name_from_uid(
+    banned_by_username, banned_by_fullname = await get_name_from_uid(
         context, origin.banned_by
     )
-    banned_by_origininfo = f"{escape_markdown(sanitize_userinfo(banned_by_fullname),version=2)} \\(@{escape_markdown(banned_by_originname,version=2)}, `{origin.banned_by}`\\)"
+    banned_by_origininfo = generate_userinfo_str(id=int(origin.banned_by),fullname=banned_by_fullname,username=banned_by_username)
     origins_string = f"{banned_origininfo}\n  在 {escape_markdown(str(origin['banned_date']), version=2)}\n  由 {banned_by_origininfo}\n  因 `{escape_markdown(origin['banned_reason'], version=2)}` 屏蔽"
     return origins_string
 

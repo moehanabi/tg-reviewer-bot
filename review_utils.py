@@ -17,7 +17,7 @@ from env import (
     TG_REJECTED_CHANNEL,
     TG_RETRACT_NOTIFY,
 )
-from utils import send_result_to_submitter, send_submission, sanitize_userinfo
+from utils import send_result_to_submitter, send_submission, sanitize_userinfo, generate_userinfo_str
 
 """
 submission_meta = {
@@ -630,7 +630,7 @@ def generate_submission_meta_string(submission_meta, longago_status=0):
     submitter_id, submitter_username, submitter_fullname, _ = submission_meta[
         "submitter"
     ]
-    submitter_string = f"投稿人：{submitter_fullname} ({f'@{submitter_username}, ' if submitter_username else ''}{submitter_id})\n"
+    submitter_string = f"投稿人：{generate_userinfo_str(id=int(submitter_id),username=submitter_username,fullname=submitter_fullname)}\n"
 
     # reviewers_string
     is_nsfw = False
@@ -661,7 +661,7 @@ def generate_submission_meta_string(submission_meta, longago_status=0):
                         f"因为 {get_rejection_reason_text(option)} 拒稿"
                     )
                     option_sign = "🔴"
-            reviewers_string += f"\n- {option_sign} 由 {reviewer_fullname} ({f'@{reviewer_username}, ' if reviewer_username else ''}{reviewer_id}) {option_text}"
+            reviewers_string += f"\n\\- {option_sign} 由 {generate_userinfo_str(id=int(reviewer_id),fullname=reviewer_fullname,username=reviewer_username)} {escape_markdown(option_text,version=2)}"
 
     # append_string
     append_string = "审稿人备注："
