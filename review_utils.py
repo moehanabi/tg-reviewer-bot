@@ -17,7 +17,7 @@ from env import (
     TG_REJECTED_CHANNEL,
     TG_RETRACT_NOTIFY,
 )
-from utils import send_result_to_submitter, send_submission
+from utils import send_result_to_submitter, send_submission, sanitize_userinfo
 
 """
 submission_meta = {
@@ -666,7 +666,7 @@ def generate_submission_meta_string(submission_meta, longago_status=0):
     # append_string
     append_string = "审稿人备注："
     for reviewer_fullname, append_list in submission_meta["append"].items():
-        append_string += f"\n - 由 {reviewer_fullname} 添加的备注："
+        append_string += f"\n - 由 {sanitize_userinfo(escape_markdown(reviewer_fullname),version=2)} 添加的备注："
         append_string += "".join(
             f"\n{i+1}. {message}" for i, message in enumerate(append_list)
         )
