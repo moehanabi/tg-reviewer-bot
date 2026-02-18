@@ -127,6 +127,8 @@ class Submitter(Base):
                 cur_submitter.max_submission_per_hour,
                 cur_submitter.count_from_last_hour,
             )
+            if isinstance(last_submit, str):
+                last_submit = datetime.strptime(last_submit, "%Y-%m-%d %H:%M:%S.%f")
             next_hour_begin = last_submit.replace(
                 minute=0, second=0, microsecond=0
             ) + timedelta(hours=1)
@@ -158,6 +160,8 @@ class Submitter(Base):
                 cur_submitter.max_submission_per_hour,
                 cur_submitter.count_from_last_hour,
             )
+            if isinstance(last_submit, str):
+                last_submit = datetime.strptime(last_submit, "%Y-%m-%d %H:%M:%S.%f")
             next_hour_begin = last_submit.replace(
                 minute=0, second=0, microsecond=0
             ) + timedelta(hours=1)
