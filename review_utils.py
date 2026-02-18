@@ -658,7 +658,7 @@ def generate_submission_meta_string(submission_meta, longago_status=0):
                     option_sign = "🔴"
                 case _:
                     option_text = (
-                        f"因为 {get_rejection_reason_text(option)} 拒稿"
+                        f"因为 {escape_markdown(get_rejection_reason_text(option),version=2)} 拒稿"
                     )
                     option_sign = "🔴"
             reviewers_string += f"\n\\- {option_sign} 由 {generate_userinfo_str(id=int(reviewer_id),fullname=reviewer_fullname,username=reviewer_username)} {escape_markdown(option_text,version=2)}"
@@ -666,12 +666,15 @@ def generate_submission_meta_string(submission_meta, longago_status=0):
     # append_string
     append_string = "审稿人备注："
     for reviewer_fullname, append_list in submission_meta["append"].items():
-        append_string += f"\n - 由 {sanitize_userinfo(escape_markdown(reviewer_fullname),version=2)} 添加的备注："
+        append_string += f"\n \\- 由 {sanitize_userinfo(escape_markdown(reviewer_fullname,version=2))} 添加的备注："
         append_string += "".join(
-            f"\n{i+1}. {message}" for i, message in enumerate(append_list)
+            f"\n{i+1}\\. {escape_markdown(message,version=2)}" for i, message in enumerate(append_list)
         )
+
     if append_string == "审稿人备注：":
         append_string = ""
+    else:
+        append_string = "\n" + append_string + "\n"
 
     # status_string and status_tag
     status_string = ""
@@ -684,7 +687,7 @@ def generate_submission_meta_string(submission_meta, longago_status=0):
             status_string = "以 NSFW 通过" if is_nsfw else "以 SFW 通过"
             status_tag = "#APPROVED #SFW" if not is_nsfw else "#APPROVED #NSFW"
         case SubmissionStatus.REJECTED:
-            status_string = f"因为 {rejection_reason} 被拒稿"
+            status_string = f"因为 {escape_markdown(rejection_reason,version=2)} 被拒稿"
             status_tag = "#REJECTED"
         case SubmissionStatus.REJECTED_NO_REASON:
             status_string = "被拒稿，待选择理由"
@@ -708,19 +711,7 @@ def generate_submission_meta_string(submission_meta, longago_status=0):
     tags += f" {status_tag}"
 
     submission_meta_text = f"[\u200b](http://t.me/{base64.urlsafe_b64encode(pickle.dumps(submission_meta)).decode()})"
-    visible_content = escape_markdown(
-        dedent(
-            f"""\
-{status_title}
+    visible_content = dedent(status_title + "\n\n" + submitter_string + "\n" + reviewers_string + "\n" + append_string + "\n当前状态：" + status_string + "\n\n" + escape_markdown(tags,version=2))
 
-{submitter_string}
-{reviewers_string}
-{append_string}
-当前状态：{status_string}
-
-{tags}"""
-        ),
-        version=2,
-    )
     # use Zero-width non-joiner and fake url(or the bot api will delete invalid link) to hide the submission_meta
     return f"{visible_content}{submission_meta_text}"
