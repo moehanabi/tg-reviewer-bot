@@ -1,4 +1,4 @@
-import collections
+import collections, re
 
 from telegram import (
     InputMediaDocument,
@@ -273,7 +273,9 @@ def is_integer(s):
         return False
 
 def sanitize_userinfo(text: str) -> str:
-    import re
     if not text:
-        return ""
-    return re.sub(r'[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF\x00-\x1F\x7F\x80-\x9F]', '', text).strip()
+        return "*_空白用户名_*"
+    userinfo = re.sub(r'[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF\x00-\x1F\x7F\x80-\x9F]', '', text).strip()
+    if userinfo == "":
+        userinfo = "*_空白用户名_*"
+    return userinfo
