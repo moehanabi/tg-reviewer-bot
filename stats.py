@@ -21,7 +21,7 @@ async def submitter_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 if replyto_user_id == self_id:
                     tag_submitter_id = re.findall(r"#SUBMITTER_(\d+)", update.message.reply_to_message.text)
                     if tag_submitter_id:
-                        submitter_id = tag_submitter_id[-1]
+                        submitter_id = tag_submitter_id[0]
                     else:
                         update.message.reply_text("请提供用户ID")
                         return
