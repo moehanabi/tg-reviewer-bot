@@ -6,12 +6,14 @@ from telegram.helpers import escape_markdown
 from db_op import Banned_origin, Banned_user
 from utils import get_name_from_uid, is_integer, sanitize_userinfo
 
+import re
 
 async def ban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         # need at least reason even if user is from reply
         await update.message.reply_text(
-            "请提供用户ID和原因",
+            "使用方法：\n`/ban <usrid> reason`",
+            parse_mode=ParseMode.MARKDOWN_V2,
         )
         return
     user, result = context.args[0], context.args[1:]
@@ -21,23 +23,28 @@ async def ban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
         elif user.startswith("#SUBMITTER_"):
             user = user[11:]
 
+    # only reason, no userid. so `user` is just reason
     if not user.isdigit():
         if update.message.reply_to_message:
             replyto_user_id = str(update.message.reply_to_message.from_user.id)
             self_id = str((await context.bot.get_me()).id)
             if replyto_user_id == self_id:
+                tag_unban_id = re.findall(r"#UNBAN_(\d+)", update.message.reply_to_message.text)
                 tag_submitter_id = re.findall(r"#SUBMITTER_(\d+)", update.message.reply_to_message.text)
-                if tag_submitter_id:
-                    result = context.args
-                    user = tag_submitter_id[-1]
+                if tag_unban_id:
+                    result = user
+                    user = tag_unban_id[0]
+                elif tag_submitter_id:
+                    result = user
+                    user = tag_submitter_id[0]
                 else:
-                    update.message.reply_text(
+                    await update.message.reply_text(
                         f"ID *{escape_markdown(user,version=2,)}* 无效，且回复的消息中无投稿人信息。",
                         parse_mode=ParseMode.MARKDOWN_V2,
                     )
                     return
             else:
-                update.message.reply_text(
+                await update.message.reply_text(
                     f"ID *{escape_markdown(user,version=2,)}* 无效，且回复的消息不是投稿机器人消息。",
                     parse_mode=ParseMode.MARKDOWN_V2,
                 )
@@ -113,11 +120,27 @@ async def get_banned_user_info(context: ContextTypes.DEFAULT_TYPE, user):
 
 async def unban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
-        await update.message.reply_text(
-            "请提供用户ID",
-        )
-        return
-    user = context.args[0]
+        if update.message.reply_to_message:
+            tag_ban_id = re.findall(r"#BAN_(\d+)", update.message.reply_to_message.text)
+            tag_submitter_id = re.findall(r"#SUBMITTER_(\d+)", update.message.reply_to_message.text)
+            if tag_ban_id:
+                user = tag_ban_id[0]
+            elif tag_submitter_id:
+                user = tag_submitter_id[0]
+            else:
+                await update.message.reply_text(
+                    "使用方法：\n`/unban <usrid>`",
+                    parse_mode=ParseMode.MARKDOWN_V2,
+                )
+                return
+        else:
+            await update.message.reply_text(
+                "使用方法：\n`/unban <usrid>`",
+                parse_mode=ParseMode.MARKDOWN_V2,
+            )
+            return
+    else:
+        user = context.args[0]
 
     if user.startswith(("#USER_","#SUBMITTER_","#BAN_")):
         if user.startswith("#USER_"):
