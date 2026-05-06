@@ -368,10 +368,11 @@ async def comment_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def send_custom_rejection_reason(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ):
-    reject_msg = update.message.text_markdown_v2_urled.split("/reject ")[1]
+    reject_msg = update.message.text_markdown_v2_urled.split("/reject ", 1)[1]
     if not update.message.reply_to_message:
         return
     review_message = update.message.reply_to_message
+
     # if there is not a submission_meta in the review_message
     if "\u200b" not in review_message.text_markdown_v2_urled:
         return
@@ -380,6 +381,7 @@ async def send_custom_rejection_reason(
             review_message.text_markdown_v2_urled.split("/")[-1][:-1]
         )
     )
+
     # if the submission has not been rejected yet
     status = get_submission_status(submission_meta)
     if (
@@ -571,57 +573,6 @@ def get_submission_status(submission_meta, longago_status=0):
 
 def generate_submission_meta_string(submission_meta, longago_status=0):
     # generate the submission_meta string from the submission_meta
-    # approved submission string style:
-    """
-    ✅ An approved submission
-
-    Submitter: submitter.full_name (@submitter.username, submitter.id)
-    Reviewers:
-    - 🔴 Rejected by reviewer1.full_name (@reviewer1.username, reviewer1.id)
-    - 🟢 Approved as SFW by reviewer2.full_name (@reviewer2.username, reviewer2.id)
-    - 🟢 Approved as SFW by reviewer3.full_name (@reviewer3.username, reviewer3.id)
-    Status: Approved as SFW
-
-    #ABI_VER_6 #USER_submitter.id #SUBMITTER_submitter.id #SUBMITTER_UNSIGNED #USER_reviewer1.id #REVIEWER_reviewer1.id #USER_reviewer2.id #REVIEWER_reviewer2.id #USER_reviewer3.id #REVIEWER_reviewer3.id #APPROVED #SFW
-    """
-    # rejected submission string style:
-    """
-    ❌ A rejected submission
-
-    Submitter: submitter.full_name (@submitter.username, submitter.id)
-    Reviewers: 
-    - 🟢 Approved as SFW by reviewer1.full_name (@reviewer1.username, reviewer1.id)
-    - 🔴 Rejected by reviewer2.full_name (@reviewer2.username, reviewer2.id)
-    - 🔴 Rejected as 内容不够有趣 by reviewer3.full_name (@reviewer3.username, reviewer3.id)
-    Status: Rejected as 内容不够有趣
-
-    #ABI_VER_6 #USER_submitter.id #SUBMITTER_submitter.id #SUBMITTER_SIGNED #REVIEWER_reviewer1.id #USER_reviewer2.id #REVIEWER_reviewer2.id #USER_reviewer3.id #REVIEWER_reviewer3.id #REJECTED
-    """
-
-    # rejected but no reason chosen submission string style:
-    """
-    ❔ A pending review submission
-
-    Submitter: submitter.full_name (@submitter.username, submitter.id)
-    Reviewers: 
-    - 🔴 Rejected by reviewer1.full_name (@reviewer1.username, reviewer1.id)
-    - 🔴 Rejected by reviewer2.full_name (@reviewer2.username, reviewer2.id)
-    Status: Pending
-
-    #ABI_VER_6 #USER_submitter.id #SUBMITTER_submitter.id #SUBMITTER_UNSIGNED #USER_reviewer1.id #REVIEWER_reviewer1.id #USER_reviewer2.id #REVIEWER_reviewer2.id #PENDING
-    """
-
-    # pending submission string style:
-    """
-    ❔ A pending review submission
-
-    Submitter: submitter.full_name (@submitter.username, submitter.id)
-    Reviewer: Hidden until the final results of the review vote
-    Status: Pending
-
-    #ABI_VER_6 #USER_submitter.id #SUBMITTER_submitter.id #SUBMITTER_UNSIGNED #PENDING
-    """
-
     # get status and rejection reason
     status, rejection_reason = get_submission_status(submission_meta, longago_status)
 
@@ -657,10 +608,10 @@ def generate_submission_meta_string(submission_meta, longago_status=0):
                     option_sign = "🔴"
                 case _:
                     option_text = (
-                        f"因为 {escape_markdown(get_rejection_reason_text(option),version=2)} 拒稿"
+                        f"因为 `{get_rejection_reason_text(option)}` 拒稿"
                     )
                     option_sign = "🔴"
-            reviewers_string += f"\n\\- {option_sign} 由 {generate_userinfo_str(id=int(reviewer_id),fullname=reviewer_fullname,username=reviewer_username)} {escape_markdown(option_text,version=2)}"
+            reviewers_string += f"\n\\- {option_sign} 由 {generate_userinfo_str(id=int(reviewer_id),fullname=reviewer_fullname,username=reviewer_username)} {option_text}"
 
     # append_string
     append_string = "审稿人备注："
@@ -686,7 +637,7 @@ def generate_submission_meta_string(submission_meta, longago_status=0):
             status_string = "以 NSFW 通过" if is_nsfw else "以 SFW 通过"
             status_tag = "#APPROVED #SFW" if not is_nsfw else "#APPROVED #NSFW"
         case SubmissionStatus.REJECTED:
-            status_string = f"因为 {escape_markdown(rejection_reason,version=2)} 被拒稿"
+            status_string = f"因为 `{rejection_reason}` 被拒稿"
             status_tag = "#REJECTED"
         case SubmissionStatus.REJECTED_NO_REASON:
             status_string = "被拒稿，待选择理由"
