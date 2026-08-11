@@ -12,7 +12,7 @@ from telegram.ext import ContextTypes
 from telegram.ext.filters import MessageFilter
 from db_op import Banned_origin, Banned_user, Submitter
 from telegram.helpers import escape_markdown
-from env import TG_BANNED_NOTIFY, TG_TEXT_SPOILER
+from env import TG_BANNED_NOTIFY, TG_TEXT_SPOILER, TG_REVIEWER_GROUP
 
 
 class PrefixFilter(MessageFilter):
@@ -299,6 +299,11 @@ class LRUCache:
                 self.dict.popitem(last=False)
         self.dict[key] = value
 
+async def on_init(application):
+    await application.bot.send_message(
+        chat_id=int(TG_REVIEWER_GROUP),
+        text="🥷舍利子回魂🥷，🟢 Bot 已复活",
+    )
 
 def is_integer(s):
     try:

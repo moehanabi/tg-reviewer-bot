@@ -39,7 +39,7 @@ from stats import (
     reviewer_stats,
     submitter_stats,
 )
-from utils import PrefixFilter
+from utils import PrefixFilter, on_init
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -57,6 +57,8 @@ if __name__ == "__main__":
         .read_timeout(60)
         .get_updates_write_timeout(60)
         .write_timeout(60)
+        .job_queue(None)
+        .post_init(on_init)
         .build()
     )
 
