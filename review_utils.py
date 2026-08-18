@@ -7,7 +7,7 @@ from telegram.error import BadRequest
 from telegram.ext import ContextTypes
 from telegram.helpers import escape_markdown
 
-from db_op import Reviewer, Submitter
+from db_op import Reviewer, Submitter, Banned_user
 from env import (
     APPROVE_NUMBER_REQUIRED,
     REJECT_NUMBER_REQUIRED,
@@ -210,6 +210,7 @@ async def send_to_rejected_channel(
     append_messages_string = "\n".join(append_messages)
 
     inline_keyboard_content = []
+    button_to_rejected_channel = None
     inline_keyboard_content.append(
         [
             InlineKeyboardButton(
@@ -220,7 +221,7 @@ async def send_to_rejected_channel(
     )
 
     # if has rejected channel and not IGNORE, forward rejected message to it
-    if TG_REJECTED_CHANNEL and submission_meta["reviewer"][user_id][2] != len(
+    if TG_REJECTED_CHANNEL and not Banned_user.is_banned(submission_meta["submitter"][0]) and submission_meta["reviewer"][user_id][2] != len(
         REJECTION_REASON
     ):
         # send the submittion to rejected channel
@@ -255,7 +256,7 @@ async def send_to_rejected_channel(
             # link to rejected submission button
             inline_keyboard_markup=(
                 InlineKeyboardMarkup(button_to_rejected_channel)
-                if TG_REJECTED_CHANNEL
+                if button_to_rejected_channel
                 else None
             ),
         )
