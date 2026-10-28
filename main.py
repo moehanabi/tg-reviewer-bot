@@ -31,6 +31,7 @@ from review_utils import (
     remove_append_message,
     retract_approved_submission,
     send_custom_rejection_reason,
+    track_message,
 )
 from stats import (
     get_set_default_max_submission_per_hour,
@@ -126,6 +127,12 @@ if __name__ == "__main__":
                     | PrefixFilter(f"@{TG_BOT_USERNAME} /reject ")
                 ),
                 send_custom_rejection_reason,
+            ),
+            CommandHandler(
+                "track",
+                track_message,
+                filters=~filters.UpdateType.EDITED_MESSAGE
+                & filters.Chat(chat_id=int(TG_REVIEWER_GROUP)),
             ),
             CommandHandler(
                 "ban",

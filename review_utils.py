@@ -1,8 +1,15 @@
 import base64
+import binascii
 import pickle
+import re
+import secrets
+
+from cryptography.exceptions import InvalidTag
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives.kdf.scrypt import Scrypt
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.constants import ParseMode
+from telegram.constants import MessageOriginType, ParseMode
 from telegram.error import BadRequest
 from telegram.ext import ContextTypes
 from telegram.helpers import escape_markdown
@@ -12,6 +19,9 @@ from env import (
     APPROVE_NUMBER_REQUIRED,
     REJECT_NUMBER_REQUIRED,
     REJECTION_REASON,
+    TG_METADATA_ENCRYPTION_SECRET,
+    TG_PUBLISH_CHANNEL,
+    TG_REVIEWER_GROUP,
     TG_REJECT_REASON_USER_LIMIT,
     TG_REJECTED_CHANNEL,
     TG_RETRACT_NOTIFY,
@@ -366,6 +376,66 @@ async def comment_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("✅ 已发送")
 
 
+async def track_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    reply_message = update.message.reply_to_message
+    if not reply_message:
+        await update.message.reply_text(
+            '使用方式：将发布频道的投稿转发到审核群，再回复该消息 `/track`。'
+        )
+        return
+
+    forward_origin = reply_message.forward_origin
+    publish_channel_ids = {int(channel_id) for channel_id in TG_PUBLISH_CHANNEL}
+    if (
+        not forward_origin
+        or forward_origin.type != MessageOriginType.CHANNEL
+        or forward_origin.chat.id not in publish_channel_ids
+    ):
+        await update.message.reply_text(
+            '被回复的消息不是从发布频道转发的投稿消息。\n\n使用方式：将发布频道的投稿转发到审核群，再回复该消息 `/track`。'
+        )
+        return
+
+    reply_text = (
+        reply_message.text_markdown_v2_urled
+        or reply_message.caption_markdown_v2_urled
+        or ""
+    )
+    tracking_tokens = re.findall(
+        r"https?://t\.me/([A-Za-z0-9_-]+={0,2})", reply_text
+    )
+    if not tracking_tokens:
+        await update.message.reply_text(
+            '未找到投稿追踪参数\n\n{usage}'.format(usage='使用方式：将发布频道的投稿转发到审核群，再回复该消息 `/track`。')
+        )
+        return
+
+    try:
+        tracking_meta = decrypt_submission_meta_url(tracking_tokens[-1], encrypt_salt=TG_METADATA_ENCRYPTION_SECRET)
+        review_message_id = int(tracking_meta["review_message_id"])
+    except (
+        InvalidTag,
+        binascii.Error,
+        EOFError,
+        ValueError,
+        KeyError,
+        TypeError,
+        OverflowError,
+        pickle.UnpicklingError,
+    ):
+        await update.message.reply_text('投稿追踪参数无效')
+        return
+
+    reviewer_group_id = str(TG_REVIEWER_GROUP)
+    if reviewer_group_id.startswith("-100"):
+        reviewer_group_id = reviewer_group_id[4:]
+    await update.message.reply_text(
+        f"https://t.me/c/{reviewer_group_id}/{review_message_id}",
+        disable_web_page_preview=True,
+    )
+
+
+
 async def send_custom_rejection_reason(
     update: Update, context: ContextTypes.DEFAULT_TYPE
 ):
@@ -666,3 +736,39 @@ def generate_submission_meta_string(submission_meta, longago_status=0):
 
     # use Zero-width non-joiner and fake url(or the bot api will delete invalid link) to hide the submission_meta
     return f"{visible_content}{submission_meta_text}"
+
+_META_ENCRYPTION_CONTEXT = b"tg-reviewer-bot:submission-meta:enc1"
+
+def _submission_meta_key(encrypt_salt, salt):
+    # encrypt_salt is a secret password; salt is a separate random public value.
+    if isinstance(encrypt_salt, str):
+        password = encrypt_salt.encode("utf-8")
+    elif isinstance(encrypt_salt, bytes):
+        password = encrypt_salt
+    else:
+        raise TypeError("encrypt_salt must be a secret string or bytes")
+    return Scrypt(salt=salt, length=32, n=2**17, r=8, p=1).derive(password)
+
+def generate_submission_meta_url(meta, encrypt_salt:str, space:str = '\u200b'):
+    if not isinstance(meta, dict):
+        raise TypeError("meta must be a dictionary")
+    payload = pickle.dumps(meta)
+
+    salt = secrets.token_bytes(16)
+    nonce = secrets.token_bytes(12)
+    key = _submission_meta_key(encrypt_salt, salt)
+    ciphertext = AESGCM(key).encrypt(nonce, payload, _META_ENCRYPTION_CONTEXT)
+    token = base64.urlsafe_b64encode(
+        salt + nonce + ciphertext
+    ).decode("ascii")
+
+    return f"[{space}](http://t.me/{token})"
+
+def decrypt_submission_meta_url(meta_url, encrypt_salt):
+    payload = base64.b64decode(token, altchars=b"-_", validate=True)
+
+    salt, nonce, ciphertext = payload[:16], payload[16:28], payload[28:]
+    key = _submission_meta_key(encrypt_salt, salt)
+    payload = AESGCM(key).decrypt(nonce, ciphertext, _META_ENCRYPTION_CONTEXT)
+
+    return pickle.loads(payload)

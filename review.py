@@ -11,6 +11,7 @@ from env import (
     APPROVE_NUMBER_REQUIRED,
     REJECT_NUMBER_REQUIRED,
     REJECTION_REASON,
+    TG_METADATA_ENCRYPTION_SECRET,
     TG_PUBLISH_CHANNEL,
     TG_SELF_APPROVE,
     TG_TIMEOUT_SINGLEREVIEW,
@@ -19,6 +20,7 @@ from review_utils import (
     ReviewChoice,
     SubmissionStatus,
     generate_submission_meta_string,
+    generate_submission_meta_url,
     get_decision,
     remove_decision,
     send_to_rejected_channel,
@@ -124,6 +126,18 @@ async def approve_submission(
         for append_list in submission_meta["append"].values():
             append_messages.extend(append_list)
         append_messages_string = "\n".join(append_messages)
+
+        tracking_link = generate_submission_meta_url(
+            {"review_message_id": review_message.message_id},
+            encrypt_salt=TG_METADATA_ENCRYPTION_SECRET,
+            space = "\u200b" if submission_meta["text"] != "" else "\uffa0"
+        )
+
+        if publish_text.endswith("||"):
+            publish_text = f"{submission_meta["text"]}\n\n{append_messages_string}\n{tracking_link}"
+        else:
+            publish_text = f"{submission_meta["text"]}\n\n{append_messages_string}{tracking_link}"
+
         sent_messages = await send_submission(
             context=context,
             chat_id=publish_channel,
@@ -131,7 +145,7 @@ async def approve_submission(
             media_type_list=submission_meta["media_type_list"],
             documents_id_list=submission_meta["documents_id_list"],
             document_type_list=submission_meta["document_type_list"],
-            text=submission_meta["text"] + "\n" + append_messages_string,
+            text=publish_text,
             has_spoiler=has_spoiler,
         )
         if main_channel_messages is None:
