@@ -133,10 +133,11 @@ async def approve_submission(
             space = "\u200b" if submission_meta["text"] != "" else "\uffa0"
         )
 
+        publish_text = submission_meta["text"] + "\n" + append_messages_string
         if publish_text.endswith("||"):
-            publish_text = f"{submission_meta["text"]}\n\n{append_messages_string}\n{tracking_link}"
+            publish_text += "\n" + tracking_link
         else:
-            publish_text = f"{submission_meta["text"]}\n\n{append_messages_string}{tracking_link}"
+            publish_text += tracking_link
 
         sent_messages = await send_submission(
             context=context,

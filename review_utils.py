@@ -765,6 +765,7 @@ def generate_submission_meta_url(meta, encrypt_salt:str, space:str = '\u200b'):
     return f"[{space}](http://t.me/{token})"
 
 def decrypt_submission_meta_url(meta_url, encrypt_salt):
+    token = meta_url
     payload = base64.b64decode(token, altchars=b"-_", validate=True)
 
     salt, nonce, ciphertext = payload[:16], payload[16:28], payload[28:]
