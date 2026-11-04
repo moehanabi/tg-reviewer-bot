@@ -377,6 +377,12 @@ async def comment_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 async def track_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not TG_METADATA_ENCRYPTION_SECRET:
+        await update.message.reply_text(
+            '未配置开启功能 `/track`。'
+        )
+        return
+
     reply_message = update.message.reply_to_message
     if not reply_message:
         await update.message.reply_text(

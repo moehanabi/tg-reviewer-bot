@@ -127,17 +127,18 @@ async def approve_submission(
             append_messages.extend(append_list)
         append_messages_string = "\n".join(append_messages)
 
-        tracking_link = generate_submission_meta_url(
-            {"review_message_id": review_message.message_id},
-            encrypt_salt=TG_METADATA_ENCRYPTION_SECRET,
-            space = "\u200b" if submission_meta["text"] != "" else "\uffa0"
-        )
-
         publish_text = submission_meta["text"] + "\n" + append_messages_string
-        if publish_text.endswith("||"):
-            publish_text += "\n" + tracking_link
-        else:
-            publish_text += tracking_link
+
+        if not TG_METADATA_ENCRYPTION_SECRET:
+            tracking_link = generate_submission_meta_url(
+                {"review_message_id": review_message.message_id},
+                encrypt_salt=TG_METADATA_ENCRYPTION_SECRET,
+                space = "\u200b" if submission_meta["text"] != "" else "\uffa0"
+            )
+            if publish_text.endswith("||"):
+                publish_text += "\n" + tracking_link
+            else:
+                publish_text += tracking_link
 
         sent_messages = await send_submission(
             context=context,
