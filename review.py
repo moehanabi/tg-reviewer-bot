@@ -129,7 +129,7 @@ async def approve_submission(
 
         publish_text = submission_meta["text"] + "\n" + append_messages_string
 
-        if not TG_METADATA_ENCRYPTION_SECRET:
+        if TG_METADATA_ENCRYPTION_SECRET:
             tracking_link = generate_submission_meta_url(
                 {"review_message_id": review_message.message_id},
                 encrypt_salt=TG_METADATA_ENCRYPTION_SECRET,
