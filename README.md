@@ -82,6 +82,12 @@ Telegram 投稿/审稿机器人，基于 Telegram Bot API 7.1 以及 python-tele
 
 设置环境变量，安装 `python-telegram-bot v21.0.1` 库，运行 `main.py` 文件即可。代码使用 python3 编写。
 
+## 相关工具
+
+### 查重 bot
+
+我们同时提供配套的查重 bot，可以阅读 [README.md](dedup/README.md) 了解用法，阅读 [PLAN.md](dedup/PLAN.md) 了解 vibe 设计。查重 bot 代码由 Qwen3.8-27B-UD-IQ2_XXS 协作完成，其中对旧稿件回填功能未作测试，使用后果自负。
+
 ## 技术支持与贡献
 
 如果您在使用过程中遇到任何问题，或者希望为项目贡献代码，请通过 GitHub 的 issue 或 pull request 与我们联系。
