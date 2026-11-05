@@ -133,7 +133,7 @@ async def approve_submission(
             tracking_link = generate_submission_meta_url(
                 {"review_message_id": review_message.message_id},
                 encrypt_salt=TG_METADATA_ENCRYPTION_SECRET,
-                space = "\u200b" if submission_meta["text"] != "" else "\uffa0"
+                space = "\u200b" if submission_meta["text"] != "" else "\u00ad"
             )
             if publish_text.endswith("||"):
                 publish_text += "\n" + tracking_link
